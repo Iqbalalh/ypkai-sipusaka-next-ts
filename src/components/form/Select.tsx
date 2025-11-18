@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-interface Option {
-  value: string;
-  label: string;
+export interface Option {
+  value: string | boolean | number;
+  label: string | boolean | number;
 }
 
 interface SelectProps {
@@ -10,7 +10,7 @@ interface SelectProps {
   placeholder?: string;
   onChange: (value: string) => void;
   className?: string;
-  defaultValue?: string;
+  defaultValue?: string | boolean | number;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -21,7 +21,7 @@ const Select: React.FC<SelectProps> = ({
   defaultValue = "",
 }) => {
   // Manage the selected value
-  const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
+  const [selectedValue, setSelectedValue] = useState<string | boolean | number>(defaultValue);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;

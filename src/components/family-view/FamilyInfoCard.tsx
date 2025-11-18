@@ -16,6 +16,7 @@ import camelcaseKeys from "camelcase-keys";
 import { ApiResponseSingle } from "@/types/api-response";
 import { HomeDetail } from "@/types/home";
 import { InfoItem } from "../helper/InfoItemHelper";
+import Link from "next/link";
 
 export default function HomeDetailCard() {
   const { isOpen, openModal, closeModal } = useModal();
@@ -60,18 +61,17 @@ export default function HomeDetailCard() {
     <>
       {/* Home Info */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mb-6">
-        <h4 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-4">
-          Informasi Rumah
+        <h4 className="text-2xl gap-4 flex font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Data Keluarga{" "}
+          <div>
+            <Badge>{data?.selectedRegionName || "Tidak ada data"}</Badge>
+          </div>
         </h4>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-          <InfoItem label="ID Rumah" value={data?.homeId?.toString() || "-"} />
+          <InfoItem label="ID" value={data?.homeId?.toString() || "-"} />
           <InfoItem
             label="Kode Pos"
             value={data?.homePostalCode || data?.selectedPostalCode || "-"}
-          />
-          <InfoItem
-            label="Wilayah"
-            value={data?.selectedRegionName || "Tidak ada data"}
           />
           <InfoItem
             label="Dibuat Pada"
@@ -118,15 +118,16 @@ export default function HomeDetailCard() {
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  <Badge>{data?.selectedRegionName || "Tidak ada data"}</Badge>
+                  <Badge>PLH</Badge>
                 </p>
               </div>
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-              <Button onClick={openModal} variant="outline">
+              <Link href={`/employee/edit/${data?.employeeId}`}><Button variant="outline">
                 Edit
-              </Button>
+              </Button></Link>
+              
             </div>
           </div>
         </div>
@@ -135,8 +136,8 @@ export default function HomeDetailCard() {
         <div className="mt-6">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
             <InfoItem
-              label="PLH/Non-PLH"
-              value={data?.employeeIsAccident ? "PLH" : "Non-PLH"}
+              label="Kecelakaan/Meninggal"
+              value={data?.employeeIsAccident ? "Kecelakaan" : "Meninggal"}
             />
             <InfoItem
               label="Penyebab Kematian"
@@ -186,8 +187,9 @@ export default function HomeDetailCard() {
 
       {/* Partner */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
-        <h4 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-4">
-          Pasangan {data?.isUmkm ? <Badge color="info">UMKM</Badge> : ""}
+        <h4 className="text-2xl font-semibold flex text-gray-800 dark:text-white/90 mb-4 gap-4">
+          Pasangan{" "}
+          <div>{data?.isUmkm ? <Badge color="info">UMKM</Badge> : ""}</div>
         </h4>
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
@@ -211,7 +213,9 @@ export default function HomeDetailCard() {
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  <Badge>{data?.selectedRegionName || "Tidak ada data"}</Badge>
+                  <Badge color={data?.partnerIsActive ? "success" : "error"}>
+                    {data?.partnerIsActive ? "Aktif" : "Tidak Aktif"}
+                  </Badge>
                 </p>
               </div>
             </div>

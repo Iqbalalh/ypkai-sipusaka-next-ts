@@ -3,7 +3,7 @@ import React from "react";
 interface TextareaProps {
   placeholder?: string; // Placeholder text
   rows?: number; // Number of rows
-  value?: string; // Current value
+  value?: string | number | null; // Current value
   onChange?: (value: string) => void; // Change handler
   className?: string; // Additional CSS classes
   disabled?: boolean; // Disabled state

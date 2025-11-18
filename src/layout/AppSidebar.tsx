@@ -5,14 +5,14 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  BoxCubeIcon,
+  // BoxCubeIcon,
   // CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
   ListIcon,
   // PageIcon,
-  PieChartIcon,
+  // PieChartIcon,
   PlugInIcon,
   // TableIcon,
   // UserCircleIcon,
@@ -74,29 +74,29 @@ const navItems: NavItem[] = [
 ];
 
 const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Charts",
+  //   subItems: [
+  //     { name: "Line Chart", path: "/line-chart", pro: false },
+  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elements",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alerts", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/badge", pro: false },
+  //     { name: "Buttons", path: "/buttons", pro: false },
+  //     { name: "Images", path: "/images", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    name: "Wilayah",
     subItems: [
       { name: "Sign In", path: "/signin", pro: false },
       { name: "Sign Up", path: "/signup", pro: false },
@@ -323,27 +323,34 @@ const AppSidebar: React.FC = () => {
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
+              <div className="flex items-center gap-2">
+                <Image
+                  className="dark:hidden"
+                  src="/images/logo/logo-ypkai.png"
+                  alt="Logo"
+                  width={50}
+                  height={5}
+                />
+                <p className="dark:hidden">Yayasan Pusaka KAI</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Image
+                  className="hidden dark:block"
+                  src="/images/logo/logo-ypkai.png"
+                  alt="Logo"
+                  width={50}
+                  height={5}
+                />
+                <p className="hidden dark:block text-white">Yayasan Pusaka KAI</p>
+              </div>
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/images/logo/logo-ypkai.png"
               alt="Logo"
-              width={32}
-              height={32}
+              width={20}
+              height={20}
             />
           )}
         </Link>
