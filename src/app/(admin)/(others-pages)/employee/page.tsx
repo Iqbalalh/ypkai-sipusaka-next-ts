@@ -16,7 +16,7 @@ export default function EmployeeTables() {
     <div>
       <PageBreadcrumb pageTitle="Pegawai" />
       <div className="space-y-6">
-        <ComponentCard title="Pegawai">
+        <ComponentCard title="Tabel Pegawai" createName="+" createUrl="/employee/create">
           <EmployeeTable />
         </ComponentCard>
       </div>

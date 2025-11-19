@@ -36,6 +36,7 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.5",
     "react-highlight-words": "^0.21.0",
+    "snakecase-keys": "^9.0.2",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0"
   },

@@ -1,24 +1,57 @@
 import { getSession } from "next-auth/react";
+import snakecaseKeys from "snakecase-keys";
 
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
   const session = await getSession();
-
   if (!session) throw new Error("No active session");
 
-  // token berasal dari session.user.token
   const token = session.user?.token;
   if (!token) throw new Error("No token provider");
 
   const headers = new Headers(options.headers);
   headers.set("Authorization", `Bearer ${token}`);
-  headers.set("Content-Type", "application/json");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body = options.body as any;
+
+  // =====================================
+  // AUTO-CONVERT BODY
+  // =====================================
+
+  if (body && typeof body === "object" && !(body instanceof FormData)) {
+    const hasFile = Object.values(body).some((v) => v instanceof File);
+
+    if (hasFile) {
+      // ====== Convert to FormData with snake_case ======
+      const fd = new FormData();
+      const snake = snakecaseKeys(body, { deep: false });
+
+      Object.entries(snake).forEach(([key, value]) => {
+        if (value === null || value === undefined) return;
+
+        if (value instanceof File) {
+          fd.append(key, value);
+        } else {
+          fd.append(key, value.toString());
+        }
+      });
+
+      body = fd;
+      headers.delete("Content-Type"); // penting!
+    } else {
+      // ====== JSON biasa ======
+      body = JSON.stringify(snakecaseKeys(body, { deep: true }));
+      headers.set("Content-Type", "application/json");
+    }
+  }
 
   const res = await fetch(url, {
     ...options,
     headers,
+    body,
   });
 
   return res;

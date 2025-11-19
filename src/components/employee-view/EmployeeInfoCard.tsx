@@ -1,0 +1,131 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import Button from "../ui/button/Button";
+import { Image, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { API_EMPLOYEES } from "@/lib/apiEndpoint";
+import { useParams } from "next/navigation";
+import Badge from "../ui/badge/Badge";
+import camelcaseKeys from "camelcase-keys";
+import { ApiResponseSingle } from "@/types/api-response";
+import { InfoItem } from "../helper/InfoItemHelper";
+import Link from "next/link";
+import { Employee } from "@/types/employee";
+
+export default function EmployeeDetailCard() {
+  const [data, setData] = useState<Employee | null>(null);
+  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomes = async () => {
+      try {
+        if (!id) return;
+        const res = await fetchWithAuth(`${API_EMPLOYEES}/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch home details");
+        const home: ApiResponseSingle<Employee> = await res.json();
+        const employeeData = camelcaseKeys(home.data, { deep: true });
+        setData(employeeData);
+      } catch (error) {
+        console.error("Error fetching home details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomes();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Spin indicator={<LoadingOutlined spin />} size="large" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {/* Employee */}
+      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+        <h4 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Pegawai
+        </h4>
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
+            <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
+              <Image
+                width={80}
+                height={80}
+                src={data?.employeePict || "/images/user/alt-user.png"}
+                alt={"Profile"}
+              />
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
+                {data?.employeeName} ({data?.nipNipp})
+              </h4>
+              <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
+                <p className="text-md text-gray-500 dark:text-gray-400">
+                  {data?.employeeGender === "M" ? "Laki-laki" : "Perempuan"}
+                </p>
+                <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <Badge>PLH</Badge>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
+              <Link href={`/employee/edit/${data?.id}`}>
+                <Button variant="outline">Edit</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ====== Detail Info ====== */}
+        <div className="mt-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+            <InfoItem
+              label="Kecelakaan/Meninggal"
+              value={data?.isAccident ? "Kecelakaan" : "Meninggal"}
+            />
+            <InfoItem
+              label="Penyebab Kematian"
+              value={data?.deathCause || "-"}
+            />
+            <InfoItem
+              label="Posisi Terakhir"
+              value={data?.lastPosition || "-"}
+            />
+            <InfoItem
+              label="Wilayah ID"
+              value={data?.regionId?.toString() || "-"}
+            />
+            <InfoItem
+              label="Dibuat Pada"
+              value={
+                data?.createdAt
+                  ? new Date(data.createdAt).toLocaleString()
+                  : "-"
+              }
+            />
+            <InfoItem
+              label="Diperbarui Pada"
+              value={
+                data?.updatedAt
+                  ? new Date(data.updatedAt).toLocaleString()
+                  : "-"
+              }
+            />
+            <InfoItem label="Catatan" value={data?.notes || "-"} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
