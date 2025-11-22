@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useModal } from "../../hooks/useModal";
-import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
-import Input from "../form/input/InputField";
-import Label from "../form/Label";
 import { Image, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
@@ -18,8 +14,7 @@ import { HomeDetail } from "@/types/home";
 import { InfoItem } from "../helper/InfoItemHelper";
 import Link from "next/link";
 
-export default function HomeDetailCard() {
-  const { isOpen, openModal, closeModal } = useModal();
+export default function FamilyInfoCard() {
   const [data, setData] = useState<HomeDetail | null>(null);
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -43,11 +38,6 @@ export default function HomeDetailCard() {
 
     fetchHomes();
   }, [id]);
-
-  const handleSave = () => {
-    console.log("Saving changes...");
-    closeModal();
-  };
 
   if (loading) {
     return (
@@ -124,10 +114,9 @@ export default function HomeDetailCard() {
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-              <Link href={`/employee/edit/${data?.employeeId}`}><Button variant="outline">
-                Edit
-              </Button></Link>
-              
+              <Link href={`/employee/edit/${data?.employeeId}`}>
+                <Button variant="outline">Edit</Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -147,10 +136,11 @@ export default function HomeDetailCard() {
               label="Posisi Terakhir"
               value={data?.employeeLastPosition || "-"}
             />
-            <InfoItem
-              label="Wilayah ID"
-              value={data?.employeeRegionId?.toString() || "-"}
-            />
+            <InfoItem label="Catatan" value={data?.partnerJob || "-"} />
+            {/* <InfoItem
+              label="Wilayah"
+              value={data?.employeeRegionName?.toString() || "-"}
+            /> */}
             <InfoItem
               label="Dibuat Pada"
               value={
@@ -167,22 +157,8 @@ export default function HomeDetailCard() {
                   : "-"
               }
             />
-            <InfoItem label="Catatan" value={data?.partnerJob || "-"} />
           </div>
         </div>
-
-        {/* ====== Modal Edit ====== */}
-        <Modal isOpen={isOpen} onClose={closeModal}>
-          <div className="space-y-4">
-            <Label>Employee Name</Label>
-            <Input value={data?.employeeName || ""} onChange={() => {}} />
-            <Label>Partner Name</Label>
-            <Input value={data?.partnerName || ""} onChange={() => {}} />
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleSave}>Save</Button>
-            </div>
-          </div>
-        </Modal>
       </div>
 
       {/* Partner */}
@@ -221,9 +197,9 @@ export default function HomeDetailCard() {
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-              <Button onClick={openModal} variant="outline">
-                Edit
-              </Button>
+              <Link href={`/partner/edit/${data?.partnerId}`}>
+                <Button variant="outline">Edit</Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -264,22 +240,22 @@ export default function HomeDetailCard() {
               label="Nomor Telp Alt"
               value={data?.partnerPhoneNumberAlt || "-"}
             />
-            <InfoItem
+            {/* <InfoItem
               label="Status Aktif"
               value={data?.partnerIsActive ? "Aktif" : "Tidak Aktif"}
-            />
+            /> */}
             <InfoItem
               label="Status Hidup"
               value={data?.partnerIsAlive ? "Hidup" : "Meninggal"}
             />
-            <InfoItem
+            {/* <InfoItem
               label="Wilayah ID"
-              value={data?.partnerRegionId?.toString() || "-"}
-            />
-            <InfoItem
+              value={data?.partnerRegionName?.toString() || "-"}
+            /> */}
+            {/* <InfoItem
               label="Subdistrict ID"
               value={data?.partnerSubdistrictId?.toString() || "-"}
-            />
+            /> */}
             <InfoItem
               label="Koordinat Rumah"
               value={
@@ -311,22 +287,8 @@ export default function HomeDetailCard() {
                   : "-"
               }
             />
-            <InfoItem label="Catatan" value={data?.partnerJob || "-"} />
           </div>
         </div>
-
-        {/* ====== Modal Edit ====== */}
-        <Modal isOpen={isOpen} onClose={closeModal}>
-          <div className="space-y-4">
-            <Label>Employee Name</Label>
-            <Input value={data?.employeeName || ""} onChange={() => {}} />
-            <Label>Partner Name</Label>
-            <Input value={data?.partnerName || ""} onChange={() => {}} />
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleSave}>Save</Button>
-            </div>
-          </div>
-        </Modal>
       </div>
 
       {/* Children List */}
@@ -387,7 +349,7 @@ export default function HomeDetailCard() {
                   </div>
 
                   <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                    <Button onClick={openModal} variant="outline">
+                    <Button variant="outline">
                       Edit
                     </Button>
                   </div>
@@ -479,7 +441,7 @@ export default function HomeDetailCard() {
                 </div>
 
                 <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                  <Button onClick={openModal} variant="outline">
+                  <Button variant="outline">
                     Edit
                   </Button>
                 </div>
@@ -514,18 +476,6 @@ export default function HomeDetailCard() {
                 />
               </div>
             </div>
-
-            <Modal isOpen={isOpen} onClose={closeModal}>
-              <div className="space-y-4">
-                <Label>Nama Wali</Label>
-                <Input value={data?.waliName || ""} onChange={() => {}} />
-                <Label>Nomor Telp Wali</Label>
-                <Input value={data?.waliPhone || ""} onChange={() => {}} />
-                <div className="flex justify-end pt-4">
-                  <Button onClick={handleSave}>Save</Button>
-                </div>
-              </div>
-            </Modal>
           </>
         </div>
       ) : (

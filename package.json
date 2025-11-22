@@ -1,6 +1,6 @@
 {
-  "name": "free-nextjs-admin-dashboard",
-  "version": "2.0.2",
+  "name": "sipusaka",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",

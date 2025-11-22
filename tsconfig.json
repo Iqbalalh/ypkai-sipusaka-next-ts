@@ -23,6 +23,6 @@
     },
     "types": ["next-auth"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/types/**/*.d.ts", ".next/types/**/*.d.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/types/**/*.d.ts", ".next/types/**/*.d.ts", "src/app/(admin)/(others-pages)/partner/create"],
   "exclude": ["node_modules"]
 }

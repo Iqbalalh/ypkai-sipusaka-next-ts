@@ -30,6 +30,7 @@ export interface HomeDetail {
   employeeDeathCause: string | null;
   employeeLastPosition: string | null;
   employeeRegionId: number | null;
+  employeeRegionName: string | null;      // ← DITAMBAHKAN
   employeeNotes: string | null;
   employeeGender: "M" | "F" | null;
   employeeIsAccident: boolean | null;
@@ -41,11 +42,12 @@ export interface HomeDetail {
   // 💑 PARTNER
   // =======================
   partnerId: number | null;
-  employeePartnerId: number | null; // relasi employee_id bila ada
+  employeePartnerId: number | null;
   partnerName: string | null;
   partnerJob: string | null;
   partnerNik: string | null;
   partnerRegionId: number | null;
+  partnerRegionName: string | null;       // ← DITAMBAHKAN
   partnerAddress: string | null;
   partnerSubdistrictId: number | null;
   partnerPostalCode: string | null;

@@ -1,151 +1,157 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
-import Input from "@/components/form/input/InputField";
-import TextArea from "@/components/form/input/TextArea";
-import Select, { Option } from "@/components/form/Select";
 import FileInput from "@/components/form/input/FileInput";
-import { Image, message } from "antd";
+
+import { Image, message, Input, Select, Flex, Spin } from "antd";
+import {
+  LoadingOutlined,
+} from "@ant-design/icons";
+
+
+import TextArea from "antd/es/input/TextArea";
 
 import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-
 import camelcaseKeys from "camelcase-keys";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import Button from "@/components/ui/button/Button";
+import { Option } from "@/components/form/Select";
+import { Employee } from "@/types/employee";
+import { Region } from "@/types/region";
+import { useParams, useRouter } from "next/navigation";
 
-export default function EditEmployee() {
+export default function UpdateEmployee() {
+  const { id } = useParams();
+  const router = useRouter();
+
   const [regions, setRegions] = useState<Option[]>([]);
-  const [employee, setEmployee] = useState<any>();
+  const [previewPict, setPreviewPict] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [uploadLoading, setUploadLoading] = useState(false);
 
-  const { id } = useParams();
+  const [messageApi, contextHolder] = message.useMessage();
 
-  // ============================
-  //   VALIDASI FILE
-  // ============================
+  // ============================================================
+  // FORM
+  // ============================================================
+  const [form, setForm] = useState<Employee>({
+    nipNipp: "",
+    employeeName: "",
+    deathCause: "",
+    lastPosition: "",
+    notes: "",
+    regionId: null,
+    employeeGender: "M",
+    isAccident: false,
+  });
+
+  // ============================================================
+  // VALIDASI FILE
+  // ============================================================
   const validateFile = (file: File) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 1 * 1024 * 1024; // 1MB
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    const maxSize = 1 * 1024 * 1024;
 
-    if (!allowedTypes.includes(file.type)) {
-      message.error("Format tidak valid. Hanya JPG, PNG, atau WEBP.");
+    if (!allowed.includes(file.type)) {
+      messageApi.error("Format tidak valid. Hanya JPG, PNG, WEBP.");
       return false;
     }
 
     if (file.size > maxSize) {
-      message.error("Ukuran file maksimal 1MB.");
+      messageApi.error("Ukuran file maksimal 1MB.");
       return false;
     }
 
     return true;
   };
 
-  // ============================
-  // UPLOAD FOTO
-  // ============================
-  const handleChangePict = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!validateFile(file)) return;
 
-    setUploadLoading(true);
-
-    const formData = new FormData();
-    formData.append("photo", file);
-
-    message.loading({
-      content: "Mengupload foto...",
-      key: "upload",
-      duration: 0,
-    });
-
-    try {
-      const res = await fetchWithAuth(`${API_EMPLOYEES}/${id}/photo`, {
-        method: "PATCH",
-        body: formData,
-      });
-
-      console.log(res)
-
-      if (!res.ok) throw new Error("Upload gagal");
-
-      const result = await res.json();
-
-      // Update foto di UI tanpa reload
-      setEmployee((prev: any) => ({
-        ...prev,
-        employeePictUrl: result.fileUrl,
-      }));
-
-      message.success({
-        content: "Foto berhasil diupload!",
-        key: "upload",
-        duration: 2,
-      });
-    } catch (err) {
-      console.error(err);
-      message.error({
-        content: "Gagal mengupload foto.",
-        key: "upload",
-        duration: 2,
-      });
-    } finally {
-      setUploadLoading(false);
-    }
+    setPhotoFile(file);
+    setPreviewPict(URL.createObjectURL(file));
   };
 
-  // ============================
-  // SUBMIT FORM UPDATE
-  // ============================
+  const toSnake = (str: string) =>
+    str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+  // ============================================================
+  // SUBMIT / PATCH
+  // ============================================================
   const handleSubmit = async () => {
-    if (!employee) return;
+    if (!form.nipNipp) {
+      messageApi.error("NIP/NIPP wajib diisi.");
+      return;
+    }
+
+    if (!form.employeeName) {
+      messageApi.error("Nama pegawai wajib diisi.");
+      return;
+    }
+
+    if (!form.regionId) {
+      messageApi.error("Wilayah wajib diisi.");
+      return;
+    }
+
+    if (!form.employeeGender) {
+      messageApi.error("Jenis kelamin wajib diisi.");
+      return;
+    }
+
+    if (form.isAccident === null || form.isAccident === undefined) {
+      messageApi.error("PLH / Non-PLH wajib dipilih.");
+      return;
+    }
 
     setSubmitLoading(true);
 
-    const payload = {
-      nipNipp: employee.nipNipp,
-      employeeName: employee.employeeName,
-      deathCause: employee.deathCause,
-      lastPosition: employee.lastPosition,
-      notes: employee.notes,
-      regionId: employee.regionId,
-      employeeGender: employee.employeeGender,
-      isAccident: Boolean(employee.isAccident),
-    };
-
-    message.loading({
+    messageApi.loading({
       content: "Menyimpan perubahan...",
       key: "save",
       duration: 0,
     });
 
     try {
-      const res = await fetchWithAuth(`${API_EMPLOYEES}/${employee.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const fd = new FormData();
+
+      Object.entries(form).forEach(([key, value]) => {
+        if (value === null || value === undefined) return;
+
+        let finalValue = value;
+        if (key === "isAccident") {
+          finalValue = value ? 1 : 0;
+        }
+
+        fd.append(toSnake(key), String(finalValue));
       });
 
-      if (!res.ok) throw new Error("Gagal");
+      if (photoFile) fd.append("photo", photoFile);
 
-      message.success({
-        content: "Data pegawai berhasil diperbarui.",
+      const res = await fetchWithAuth(`${API_EMPLOYEES}/${id}`, {
+        method: "PATCH",
+        body: fd,
+      });
+
+      if (!res.ok) throw new Error("Gagal update pegawai");
+
+      messageApi.success({
+        content: "Berhasil mengubah data pegawai!",
         key: "save",
         duration: 2,
       });
+      router.back();
     } catch (error) {
-      console.log(error);
-      message.error({
-        content: "Gagal menyimpan data pegawai.",
+      console.error(error);
+      messageApi.error({
+        content: "Gagal mengubah data.",
         key: "save",
         duration: 2,
       });
@@ -154,220 +160,218 @@ export default function EditEmployee() {
     }
   };
 
-  // ============================
-  // FETCH DATA
-  // ============================
+  // ============================================================
+  // FETCH EMPLOYEE + REGIONS
+  // ============================================================
   useEffect(() => {
-    const fetchData = async () => {
+    const loadInitialData = async () => {
       try {
-        if (!id) return;
-
-        const empRes = await fetchWithAuth(`${API_EMPLOYEES}/${id}`);
-        const empData = camelcaseKeys((await empRes.json()).data, {
-          deep: true,
-        });
-        setEmployee(empData);
-
+        // 1. Fetch Regions
         const regRes = await fetchWithAuth(API_REGIONS);
-        const regionData = camelcaseKeys((await regRes.json()).data, {
+        const regData = camelcaseKeys((await regRes.json()).data, {
           deep: true,
         });
 
         setRegions(
-          regionData.map((r: any) => ({
+          regData.map((r: Region) => ({
             value: r.regionId,
             label: r.regionName,
           }))
         );
-      } finally {
+
+        // 2. Fetch Employee Existing Data
+        const empRes = await fetchWithAuth(`${API_EMPLOYEES}/${id}`);
+        const empData = camelcaseKeys((await empRes.json()).data, {
+          deep: true,
+        });
+
+        setForm({
+          nipNipp: empData.nipNipp ?? "",
+          employeeName: empData.employeeName ?? "",
+          deathCause: empData.deathCause ?? "",
+          lastPosition: empData.lastPosition ?? "",
+          notes: empData.notes ?? "",
+          regionId: empData.regionId ?? null,
+          employeeGender: empData.employeeGender ?? "M",
+          isAccident: empData.isAccident === 1,
+        });
+
+        if (empData.photoUrl) {
+          setPreviewPict(empData.photoUrl);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        messageApi.error("Gagal memuat data.");
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [id]);
+    loadInitialData();
+  }, [id, messageApi]);
 
-  if (loading) return <p>Loading...</p>;
-  if (!employee) return <p>No data available</p>;
+  if (loading) return <div className="flex gap-2">
+        <Flex align="center" gap="middle">
+          <Spin indicator={<LoadingOutlined spin />} size="small" />
+        </Flex>{" "}
+        Loading...
+      </div>;
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Edit Pegawai" />
+      {contextHolder}
+      <PageBreadcrumb pageTitle="Sunting Pegawai" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {/* LEFT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Isi Form dibawah">
+          <ComponentCard title="Ubah Data Pegawai">
             <div className="space-y-6">
-
-              {/* ID */}
+              {/* NIP */}
               <div>
-                <Label>ID</Label>
-                <Input type="number" defaultValue={employee.id} disabled />
+                <Label>NIP / NIPP *</Label>
+                <Input
+                  size="large"
+                  type="number"
+                  value={form.nipNipp}
+                  onChange={(e) => setForm({ ...form, nipNipp: e.target.value })}
+                />
               </div>
 
-              {/* nipNipp */}
+              {/* Name */}
               <div>
-                <Label>NIP / NIPP</Label>
+                <Label>Nama Pegawai *</Label>
                 <Input
-                  type="text"
-                  defaultValue={employee.nipNipp}
+                  size="large"
+                  value={form.employeeName}
                   onChange={(e) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      nipNipp: e.target.value,
-                    }))
+                    setForm({ ...form, employeeName: e.target.value })
                   }
                 />
               </div>
 
-              {/* employeeName */}
-              <div>
-                <Label>Nama Pegawai</Label>
-                <Input
-                  type="text"
-                  defaultValue={employee.employeeName}
-                  onChange={(e) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      employeeName: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              {/* deathCause */}
+              {/* Death Cause */}
               <div>
                 <Label>Penyebab Kematian</Label>
                 <Input
-                  type="text"
-                  defaultValue={employee.deathCause || ""}
+                  size="large"
+                  value={form.deathCause}
                   onChange={(e) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      deathCause: e.target.value,
-                    }))
+                    setForm({ ...form, deathCause: e.target.value })
                   }
                 />
               </div>
 
-              {/* lastPosition */}
+              {/* Last Position */}
               <div>
                 <Label>Posisi Terakhir</Label>
                 <Input
-                  type="text"
-                  defaultValue={employee.lastPosition || ""}
+                  size="large"
+                  value={form.lastPosition}
                   onChange={(e) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      lastPosition: e.target.value,
-                    }))
+                    setForm({ ...form, lastPosition: e.target.value })
                   }
                 />
               </div>
 
-              {/* notes */}
+              {/* Notes */}
               <div>
                 <Label>Catatan</Label>
                 <TextArea
-                  value={employee?.notes || ""}
-                  onChange={(value: any) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      notes: value,
-                    }))
+                  size="large"
+                  rows={4}
+                  value={form.notes}
+                  onChange={(e) =>
+                    setForm({ ...form, notes: e.target.value })
                   }
-                  rows={6}
                 />
               </div>
-            </div>
-
-            {/* SUBMIT BUTTON */}
-            <div className="pt-6">
-              <button
-                onClick={handleSubmit}
-                disabled={submitLoading}
-                className="px-4 py-2 text-white rounded bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
-              >
-                {submitLoading ? "Menyimpan..." : "Simpan Perubahan"}
-              </button>
             </div>
           </ComponentCard>
         </div>
 
-        {/* Right Column */}
+        {/* RIGHT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Pilih salah satu">
+          <ComponentCard title="* Wajib Diisi">
             <div className="space-y-6">
-
-              {/* regionId */}
+              {/* Region */}
               <div>
-                <Label>Wilayah</Label>
+                <Label>Wilayah *</Label>
                 <Select
+                  size="large"
+                  showSearch
+                  style={{ width: "100%" }}
+                  optionFilterProp="label"
                   options={regions}
-                  defaultValue={employee.regionId}
-                  onChange={(value: any) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      regionId: value,
-                    }))
-                  }
+                  value={form.regionId}
+                  onChange={(v) => setForm({ ...form, regionId: v })}
                 />
               </div>
 
               {/* Gender */}
               <div>
-                <Label>Jenis Kelamin</Label>
+                <Label>Jenis Kelamin *</Label>
                 <Select
+                  size="large"
+                  className="w-full"
                   options={[
                     { value: "F", label: "Perempuan" },
                     { value: "M", label: "Laki-laki" },
                   ]}
-                  defaultValue={employee.employeeGender}
-                  onChange={(value: any) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      employeeGender: value,
-                    }))
+                  value={form.employeeGender}
+                  onChange={(v) =>
+                    setForm({ ...form, employeeGender: v })
                   }
                 />
               </div>
 
-              {/* PLH */}
+              {/* isAccident */}
               <div>
-                <Label>PLH / Non-PLH</Label>
+                <Label>PLH / Non-PLH *</Label>
                 <Select
+                  size="large"
+                  className="w-full"
                   options={[
                     { value: true, label: "PLH" },
                     { value: false, label: "Non-PLH" },
                   ]}
-                  defaultValue={employee.isAccident}
-                  onChange={(value: any) =>
-                    setEmployee((prev: any) => ({
-                      ...prev,
-                      isAccident: value,
-                    }))
-                  }
+                  value={form.isAccident}
+                  onChange={(v) => setForm({ ...form, isAccident: v })}
                 />
               </div>
 
-              {/* Upload Foto */}
+              {/* Foto */}
               <div>
-                <Label>Foto Pegawai</Label>
-                <FileInput onChange={handleChangePict} />
+                <Label>Foto Pegawai *</Label>
 
-                {uploadLoading && (
-                  <p className="text-sm text-blue-500">Mengupload...</p>
-                )}
+                <FileInput onChange={handleSelectFile} />
 
-                {employee.employeePictUrl && !uploadLoading && (
+                {previewPict && (
                   <Image
-                    src={employee.employeePictUrl}
-                    alt="Foto Pegawai"
+                    src={previewPict}
+                    alt="Preview Foto"
                     className="object-cover mt-3 rounded-md h-32"
                   />
                 )}
               </div>
+            </div>
 
+            <div className="flex justify-between pt-6">
+              <Button
+                className="bg-gray-500 text-white"
+                onClick={() => router.back()}
+                type="reset"
+              >
+                Kembali
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitLoading}
+                className="px-4 py-2 text-white rounded bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+              >
+                {submitLoading ? "Menyimpan..." : "Simpan Perubahan"}
+              </Button>
             </div>
           </ComponentCard>
         </div>

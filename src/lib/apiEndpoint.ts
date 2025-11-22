@@ -18,3 +18,6 @@ export const API_PARTNERS = `${baseUrl}/api/partners`;
 
 // Wali
 export const API_WALI = `${baseUrl}/api/wali`;
+
+// Subdistricts
+export const API_SUBDISTRICTS = `${baseUrl}/api/subdistricts`;

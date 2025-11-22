@@ -1,14 +1,17 @@
 export interface Employee {
-  id: number;
+  id?: number;
   nipNipp: string;
   employeeName: string;
-  deathCause: string | null;
-  lastPosition: string | null;
-  regionId: number;
-  notes: string | null;
+  deathCause: string;
+  lastPosition?: string;
+  regionId: number | null;
+  notes?: string | null;
   employeeGender: "M" | "F"
   isAccident: boolean;
-  employeePict: string | null;
-  createdAt: string | null; // Timestamp ISO
-  updatedAt: string | null; // Timestamp ISO
+  employeePict?: string | null;
+  createdAt?: string | null; // Timestamp ISO
+  updatedAt?: string | null; // Timestamp ISO
+
+  // Non-native Field
+  regionName?: string | null;
 }

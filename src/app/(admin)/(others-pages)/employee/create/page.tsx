@@ -1,23 +1,28 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
-import Input from "@/components/form/input/InputField";
-import TextArea from "@/components/form/input/TextArea";
-import Select, { Option } from "@/components/form/Select";
 import FileInput from "@/components/form/input/FileInput";
 
-import { Image, message } from "antd";
+import { Image, message, Input, Select, Flex, Spin } from "antd";
+import { LoadingOutlined } from "@ant-design/icons";
+
+import TextArea from "antd/es/input/TextArea";
 
 import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
+import { Option } from "@/components/form/Select";
+import { Employee } from "@/types/employee";
+import { Region } from "@/types/region";
+import { useRouter } from "next/navigation";
 
 export default function CreateEmployee() {
+  const router = useRouter();
+
   const [regions, setRegions] = useState<Option[]>([]);
   const [previewPict, setPreviewPict] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -25,34 +30,36 @@ export default function CreateEmployee() {
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
 
+  const [messageApi, contextHolder] = message.useMessage();
+
   // ==============================================
-  // FORM STATE
+  // FORM DATA
   // ==============================================
-  const [form, setForm] = useState<any>({
+  const [form, setForm] = useState<Employee>({
     nipNipp: "",
     employeeName: "",
     deathCause: "",
     lastPosition: "",
     notes: "",
-    regionId: "",
-    employeeGender: "",
+    regionId: null,
+    employeeGender: "M",
     isAccident: false,
   });
 
   // ==============================================
-  // VALIDASI FILE
+  // VALIDATE FILE
   // ==============================================
   const validateFile = (file: File) => {
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 1 * 1024 * 1024; // 1MB
+    const maxSize = 1 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
-      message.error("Format tidak valid. Hanya JPG, PNG, atau WEBP.");
+      messageApi.error("Format tidak valid. Hanya JPG, PNG, atau WEBP.");
       return false;
     }
 
     if (file.size > maxSize) {
-      message.error("Ukuran file maksimal 1MB.");
+      messageApi.error("Ukuran file maksimal 1MB.");
       return false;
     }
 
@@ -60,7 +67,7 @@ export default function CreateEmployee() {
   };
 
   // ==============================================
-  // Handle Pilih Foto (Preview)
+  // HANDLE FOTO SELECT
   // ==============================================
   const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,23 +80,43 @@ export default function CreateEmployee() {
   };
 
   // ==============================================
-  // Utility: camelCase → snake_case
+  // camelCase → snake_case
   // ==============================================
   const toSnake = (str: string) =>
     str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 
   // ==============================================
-  // SUBMIT CREATE DATA
+  // SUBMIT
   // ==============================================
   const handleSubmit = async () => {
+    if (!form.nipNipp) {
+      messageApi.error("NIP/NIPP wajib diisi.");
+      return;
+    }
+
     if (!form.employeeName) {
-      message.error("Nama pegawai wajib diisi.");
+      messageApi.error("Nama pegawai wajib diisi.");
+      return;
+    }
+
+    if (!form.regionId) {
+      messageApi.error("Wilayah wajib diisi.");
+      return;
+    }
+
+    if (!form.employeeGender) {
+      messageApi.error("Jenis kelamin wajib diisi.");
+      return;
+    }
+
+    if (form.isAccident === null || form.isAccident === undefined) {
+      messageApi.error("PLH / Non-PLH wajib dipilih.");
       return;
     }
 
     setSubmitLoading(true);
 
-    message.loading({
+    messageApi.loading({
       content: "Membuat data pegawai...",
       key: "save",
       duration: 0,
@@ -103,9 +130,8 @@ export default function CreateEmployee() {
 
         let finalValue = value;
 
-        // convert boolean string → boolean OR angka
         if (key === "isAccident") {
-          finalValue = value === true || value === "true" ? 1 : 0; // atau true/false sesuai kebutuhan backend
+          finalValue = value === true || value === "true" ? 1 : 0;
         }
 
         const snakeKey = toSnake(key);
@@ -116,33 +142,20 @@ export default function CreateEmployee() {
 
       const res = await fetchWithAuth(API_EMPLOYEES, {
         method: "POST",
-        body: fd, // FormData
+        body: fd,
       });
 
       if (!res.ok) throw new Error("Gagal membuat pegawai");
 
-      message.success({
+      messageApi.success({
         content: "Pegawai berhasil dibuat!",
         key: "save",
         duration: 2,
       });
-
-      // Reset form
-      setForm({
-        nipNipp: "",
-        employeeName: "",
-        deathCause: "",
-        lastPosition: "",
-        notes: "",
-        regionId: "",
-        employeeGender: "",
-        isAccident: false,
-      });
-      setPreviewPict(null);
-      setPhotoFile(null);
+      router.back();
     } catch (error) {
       console.error(error);
-      message.error({
+      messageApi.error({
         content: "Gagal membuat pegawai.",
         key: "save",
         duration: 2,
@@ -163,7 +176,7 @@ export default function CreateEmployee() {
       });
 
       setRegions(
-        regionData.map((r: any) => ({
+        regionData.map((r: Region) => ({
           value: r.regionId,
           label: r.regionName,
         }))
@@ -175,22 +188,34 @@ export default function CreateEmployee() {
     loadRegions();
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading)
+    return (
+      <div className="flex gap-2">
+        <Flex align="center" gap="middle">
+          <Spin indicator={<LoadingOutlined spin />} size="small" />
+        </Flex>{" "}
+        Loading...
+      </div>
+    );
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Tambah Pegawai Baru" />
+      {contextHolder}
+      <PageBreadcrumb pageTitle="Tambah Data Pegawai" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* LEFT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Isi Form Pegawai">
+          <ComponentCard title="Isi Data Pegawai">
             <div className="space-y-6">
               {/* NIP */}
               <div>
-                <Label>NIP / NIPP</Label>
+                <Label>NIP / NIPP *</Label>
                 <Input
-                  type="text"
+                  className="w-full"
+                  size="large"
+                  type="number"
+                  required={true}
                   value={form.nipNipp}
                   onChange={(e) =>
                     setForm({ ...form, nipNipp: e.target.value })
@@ -200,9 +225,11 @@ export default function CreateEmployee() {
 
               {/* Name */}
               <div>
-                <Label>Nama Pegawai</Label>
+                <Label>Nama Pegawai *</Label>
                 <Input
-                  type="text"
+                  className="w-full"
+                  size="large"
+                  required
                   value={form.employeeName}
                   onChange={(e) =>
                     setForm({ ...form, employeeName: e.target.value })
@@ -214,7 +241,8 @@ export default function CreateEmployee() {
               <div>
                 <Label>Penyebab Kematian</Label>
                 <Input
-                  type="text"
+                  className="w-full"
+                  size="large"
                   value={form.deathCause}
                   onChange={(e) =>
                     setForm({ ...form, deathCause: e.target.value })
@@ -222,11 +250,12 @@ export default function CreateEmployee() {
                 />
               </div>
 
-              {/* Position */}
+              {/* Last Position */}
               <div>
                 <Label>Posisi Terakhir</Label>
                 <Input
-                  type="text"
+                  className="w-full"
+                  size="large"
                   value={form.lastPosition}
                   onChange={(e) =>
                     setForm({ ...form, lastPosition: e.target.value })
@@ -238,9 +267,10 @@ export default function CreateEmployee() {
               <div>
                 <Label>Catatan</Label>
                 <TextArea
+                  size="large"
+                  rows={4}
                   value={form.notes}
-                  onChange={(value: any) => setForm({ ...form, notes: value })}
-                  rows={6}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
             </div>
@@ -249,30 +279,36 @@ export default function CreateEmployee() {
 
         {/* RIGHT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Detail Tambahan">
+          <ComponentCard title="* Wajib Diisi">
             <div className="space-y-6">
               {/* Region */}
               <div>
-                <Label>Wilayah</Label>
+                <Label>Wilayah *</Label>
                 <Select
+                  size="large"
+                  showSearch
+                  optionFilterProp="label"
+                  style={{ width: "100%" }}
                   options={regions}
                   value={form.regionId}
-                  onChange={(value: any) =>
-                    setForm({ ...form, regionId: value })
-                  }
+                  onChange={(value) => setForm({ ...form, regionId: value })}
                 />
               </div>
 
               {/* Gender */}
               <div>
-                <Label>Jenis Kelamin</Label>
+                <Label>Jenis Kelamin *</Label>
                 <Select
+                  size="large"
+                  showSearch
+                  optionFilterProp="label"
+                  style={{ width: "100%" }}
                   options={[
                     { value: "F", label: "Perempuan" },
                     { value: "M", label: "Laki-laki" },
                   ]}
-                  value={form?.employeeGender}
-                  onChange={(value: any) =>
+                  value={form.employeeGender}
+                  onChange={(value) =>
                     setForm({ ...form, employeeGender: value })
                   }
                 />
@@ -280,16 +316,18 @@ export default function CreateEmployee() {
 
               {/* isAccident */}
               <div>
-                <Label>PLH / Non-PLH</Label>
+                <Label>PLH / Non-PLH *</Label>
                 <Select
+                  size="large"
+                  showSearch
+                  optionFilterProp="label"
+                  style={{ width: "100%" }}
                   options={[
                     { value: true, label: "PLH" },
                     { value: false, label: "Non-PLH" },
                   ]}
                   value={form.isAccident}
-                  onChange={(value: any) =>
-                    setForm({ ...form, isAccident: value })
-                  }
+                  onChange={(value) => setForm({ ...form, isAccident: value })}
                 />
               </div>
 
@@ -310,13 +348,21 @@ export default function CreateEmployee() {
             </div>
 
             {/* SUBMIT */}
-            <div className="pt-6">
+            <div className="flex justify-between pt-6">
+              <Button
+                className="bg-gray-500 text-white"
+                onClick={() => router.back()}
+                type="reset"
+              >
+                Kembali
+              </Button>
+
               <Button
                 onClick={handleSubmit}
                 disabled={submitLoading}
                 className="px-4 py-2 text-white rounded bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
               >
-                {submitLoading ? "Menyimpan..." : "Simpan Pegawai Baru"}
+                {submitLoading ? "Menyimpan..." : "Simpan"}
               </Button>
             </div>
           </ComponentCard>

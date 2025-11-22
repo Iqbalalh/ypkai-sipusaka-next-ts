@@ -34,7 +34,9 @@ export default function EmployeeTable() {
         const res = await fetchWithAuth(`${API_EMPLOYEES}`);
         if (!res.ok) throw new Error("Failed to fetch employees");
         const json: ApiResponseList<Employee> = await res.json();
-        const employees = camelcaseKeys(json.data, { deep: true }) as Employee[];
+        const employees = camelcaseKeys(json.data, {
+          deep: true,
+        }) as Employee[];
         setData(employees);
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -52,7 +54,9 @@ export default function EmployeeTable() {
         const res = await fetchWithAuth(`${API_REGIONS}`);
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
-        const regionsData = camelcaseKeys(json.data, { deep: true }) as Region[];
+        const regionsData = camelcaseKeys(json.data, {
+          deep: true,
+        }) as Region[];
         setRegions(regionsData);
       } catch (error) {
         console.error("Error fetching regions:", error);
@@ -143,132 +147,134 @@ export default function EmployeeTable() {
   };
 
   const columns: ColumnsType<Employee> = [
-  {
-    title: "No.",
-    dataIndex: "id",
-    key: "id",
-    render: (text) => text || "-",
-  },
-  {
-    title: "Foto",
-    dataIndex: "employeePict",
-    key: "employeePict",
-    render: (_, emp) =>
-      emp.employeePict ? (
-        <Image
-          src={emp.employeePict}
-          alt={emp.employeeName}
-          width={40}
-          height={40}
-          className="rounded-full object-cover w-10 h-10"
-        />
-      ) : (
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-          N/A
+    {
+      title: "No.",
+      dataIndex: "id",
+      key: "id",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Foto",
+      dataIndex: "employeePict",
+      key: "employeePict",
+      render: (_, emp) =>
+        emp.employeePict ? (
+          <Image
+            src={emp.employeePict}
+            alt={emp.employeeName}
+            width={40}
+            height={40}
+            className="rounded-full object-cover w-10 h-10"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+            N/A
+          </div>
+        ),
+    },
+    {
+      title: "Nama Pegawai",
+      dataIndex: "employeeName",
+      key: "employeeName",
+      ...getColumnSearchProps("employeeName"),
+    },
+    {
+      title: "NIP/NIPP",
+      dataIndex: "nipNipp",
+      key: "nipNipp",
+      ...getColumnSearchProps("nipNipp"),
+    },
+    {
+      title: "Jabatan Terakhir",
+      dataIndex: "lastPosition",
+      key: "lastPosition",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Wilayah",
+      dataIndex: "regionId",
+      key: "regionId",
+      filters: regions.map((r) => ({
+        text: r.regionName,
+        value: r.regionId,
+      })),
+      onFilter: (value, record) => record.regionId === value,
+      render: (_, emp) => {
+        const region = regions.find((r) => r.regionId === emp.regionId);
+        return region ? region.regionName : "-";
+      },
+    },
+    {
+      title: "Jenis Kelamin",
+      dataIndex: "employeeGender",
+      key: "employeeGender",
+      filters: [
+        { text: "Laki-laki", value: "M" },
+        { text: "Perempuan", value: "F" },
+      ],
+      onFilter: (value, record) => record.employeeGender === value,
+      render: (gender: "M" | "F") =>
+        gender === "M" ? "Laki-laki" : "Perempuan",
+    },
+    {
+      title: "Kecelakaan",
+      dataIndex: "isAccident",
+      key: "isAccident",
+      filters: [
+        { text: "Ya", value: true },
+        { text: "Tidak", value: false },
+      ],
+      onFilter: (value, record) => record.isAccident === value,
+      render: (isAccident: boolean) => (
+        <Badge size="sm" color={isAccident ? "error" : "success"}>
+          {isAccident ? "Ya" : "Tidak"}
+        </Badge>
+      ),
+    },
+    {
+      title: "Penyebab Wafat",
+      dataIndex: "deathCause",
+      key: "deathCause",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Keterangan",
+      dataIndex: "notes",
+      key: "notes",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Dibuat Pada",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text) =>
+        text ? new Date(text).toLocaleDateString("id-ID") : "-",
+    },
+    {
+      title: "Diperbarui Pada",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      render: (text) =>
+        text ? new Date(text).toLocaleDateString("id-ID") : "-",
+    },
+    {
+      title: "Aksi",
+      key: "actions",
+      fixed: "right",
+      render: (_, emp) => (
+        <div className="flex gap-2 text-xs">
+          <Link href={`employee/view/${emp.id}`}>
+            <Button size="xs">
+              <EyeOutlined />
+            </Button>
+          </Link>
+          <Button size="xs">
+            <DeleteOutlined />
+          </Button>
         </div>
       ),
-  },
-  {
-    title: "Nama Pegawai",
-    dataIndex: "employeeName",
-    key: "employeeName",
-    ...getColumnSearchProps("employeeName"),
-  },
-  {
-    title: "NIP/NIPP",
-    dataIndex: "nipNipp",
-    key: "nipNipp",
-    ...getColumnSearchProps("nipNipp"),
-  },
-  {
-    title: "Jabatan Terakhir",
-    dataIndex: "lastPosition",
-    key: "lastPosition",
-    render: (text) => text || "-",
-  },
-  {
-    title: "Wilayah",
-    dataIndex: "regionId",
-    key: "regionId",
-    filters: regions.map((r) => ({
-      text: r.regionName,
-      value: r.regionId,
-    })),
-    onFilter: (value, record) => record.regionId === value,
-    render: (_, emp) => {
-      const region = regions.find((r) => r.regionId === emp.regionId);
-      return region ? region.regionName : "-";
     },
-  },
-  {
-    title: "Jenis Kelamin",
-    dataIndex: "employeeGender",
-    key: "employeeGender",
-    filters: [
-      { text: "Laki-laki", value: "M" },
-      { text: "Perempuan", value: "F" },
-    ],
-    onFilter: (value, record) => record.employeeGender === value,
-    render: (gender: "M" | "F") => (gender === "M" ? "Laki-laki" : "Perempuan"),
-  },
-  {
-    title: "Kecelakaan",
-    dataIndex: "isAccident",
-    key: "isAccident",
-    filters: [
-      { text: "Ya", value: true },
-      { text: "Tidak", value: false },
-    ],
-    onFilter: (value, record) => record.isAccident === value,
-    render: (isAccident: boolean) => (
-      <Badge size="sm" color={isAccident ? "error" : "success"}>
-        {isAccident ? "Ya" : "Tidak"}
-      </Badge>
-    ),
-  },
-  {
-    title: "Penyebab Wafat",
-    dataIndex: "deathCause",
-    key: "deathCause",
-    render: (text) => text || "-",
-  },
-  {
-    title: "Keterangan",
-    dataIndex: "notes",
-    key: "notes",
-    render: (text) => text || "-",
-  },
-  {
-    title: "Dibuat Pada",
-    dataIndex: "createdAt",
-    key: "createdAt",
-    render: (text) => (text ? new Date(text).toLocaleDateString("id-ID") : "-"),
-  },
-  {
-    title: "Diperbarui Pada",
-    dataIndex: "updatedAt",
-    key: "updatedAt",
-    render: (text) => (text ? new Date(text).toLocaleDateString("id-ID") : "-"),
-  },
-  {
-    title: "Aksi",
-    key: "actions",
-    fixed: "right",
-    render: (_, emp) => (
-      <div className="flex gap-2 text-xs">
-        <Link href={`employee/view/${emp.id}`}>
-          <Button size="xs">
-            <EyeOutlined />
-          </Button>
-        </Link>
-        <Button size="xs">
-          <DeleteOutlined />
-        </Button>
-      </div>
-    ),
-  },
-];
-
+  ];
 
   if (loading)
     return (
@@ -281,7 +287,7 @@ export default function EmployeeTable() {
     );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] p-4">
+    <div>
       <div className="overflow-x-auto">
         <Table
           columns={columns}
