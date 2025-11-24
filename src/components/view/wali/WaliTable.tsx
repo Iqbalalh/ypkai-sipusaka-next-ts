@@ -7,10 +7,11 @@ import {
   LoadingOutlined,
   DeleteOutlined,
   EyeOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Highlighter from "react-highlight-words";
-import Button from "../ui/button/Button";
+import Button from "@/components/ui/button/Button";
 import { API_WALI } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
@@ -138,7 +139,6 @@ export default function WaliTable() {
       title: "Foto",
       dataIndex: "waliPict",
       key: "waliPict",
-      width: 100,
       render: (val, wali) =>
         val ? (
           <center>
@@ -151,9 +151,13 @@ export default function WaliTable() {
             />
           </center>
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-            N/A
-          </div>
+          <Image
+            src={"/images/user/alt-user.png"}
+            alt={"N/A"}
+            width={40}
+            height={40}
+            className="rounded-full object-cover w-10 h-10"
+          />
         ),
     },
     {
@@ -231,6 +235,11 @@ export default function WaliTable() {
               <EyeOutlined />
             </Button>
           </Link>
+          <Link href={`wali/edit/${wali.id}`}>
+            <Button size="xs">
+              <EditOutlined />
+            </Button>
+          </Link>
           <Button size="xs">
             <DeleteOutlined />
           </Button>
@@ -250,17 +259,15 @@ export default function WaliTable() {
     );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03] p-4">
-      <div className="overflow-x-auto">
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          pagination={{ pageSize: 50, showSizeChanger: false }}
-          bordered
-          scroll={{ x: "max-content", y: 500 }}
-        />
-      </div>
+    <div className="overflow-x-auto">
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
+        pagination={{ pageSize: 50, showSizeChanger: false }}
+        bordered
+        scroll={{ x: "max-content", y: 500 }}
+      />
     </div>
   );
 }

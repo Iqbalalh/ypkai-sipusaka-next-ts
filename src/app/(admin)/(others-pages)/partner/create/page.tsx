@@ -228,12 +228,12 @@ export default function CreatePartner() {
   return (
     <div>
       {contextHolder}
-      <PageBreadcrumb pageTitle="Tambah Pasangan Baru" />
+      <PageBreadcrumb pageTitle="Tambah Data Pasangan" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* LEFT */}
         <div className="space-y-6">
-          <ComponentCard title="Isi Form Pasangan">
+          <ComponentCard title="Isi Data Pasangan">
             <div className="space-y-6">
               {/* EMPLOYEE SELECT */}
               <div>
@@ -335,7 +335,7 @@ export default function CreatePartner() {
 
         {/* RIGHT */}
         <div className="space-y-6">
-          <ComponentCard title="Detail Tambahan">
+          <ComponentCard title="* Wajib Diisi">
             <div className="space-y-6">
               <div>
                 <Label>Wilayah *</Label>

@@ -6,10 +6,7 @@ import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
 
 import { Image, message, Input, Select, Flex, Spin } from "antd";
-import {
-  LoadingOutlined,
-} from "@ant-design/icons";
-
+import { LoadingOutlined } from "@ant-design/icons";
 
 import TextArea from "antd/es/input/TextArea";
 
@@ -48,6 +45,7 @@ export default function UpdateEmployee() {
     regionId: null,
     employeeGender: "M",
     isAccident: false,
+    employeePict: "",
   });
 
   // ============================================================
@@ -194,6 +192,7 @@ export default function UpdateEmployee() {
           regionId: empData.regionId ?? null,
           employeeGender: empData.employeeGender ?? "M",
           isAccident: empData.isAccident === 1,
+          employeePict: empData.employeePict ?? undefined,
         });
 
         if (empData.photoUrl) {
@@ -211,17 +210,20 @@ export default function UpdateEmployee() {
     loadInitialData();
   }, [id, messageApi]);
 
-  if (loading) return <div className="flex gap-2">
+  if (loading)
+    return (
+      <div className="flex gap-2">
         <Flex align="center" gap="middle">
           <Spin indicator={<LoadingOutlined spin />} size="small" />
         </Flex>{" "}
         Loading...
-      </div>;
+      </div>
+    );
 
   return (
     <div>
       {contextHolder}
-      <PageBreadcrumb pageTitle="Sunting Pegawai" />
+      <PageBreadcrumb pageTitle="Form Sunting Pegawai" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* LEFT FORM */}
@@ -235,7 +237,9 @@ export default function UpdateEmployee() {
                   size="large"
                   type="number"
                   value={form.nipNipp}
-                  onChange={(e) => setForm({ ...form, nipNipp: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, nipNipp: e.target.value })
+                  }
                 />
               </div>
 
@@ -282,11 +286,22 @@ export default function UpdateEmployee() {
                   size="large"
                   rows={4}
                   value={form.notes}
-                  onChange={(e) =>
-                    setForm({ ...form, notes: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label>Foto Lama</Label>
+              {form.employeePict ? (
+                <Image
+                  src={form?.employeePict || "/images/user/alt-user.png"}
+                  alt="Preview Foto"
+                  className="object-cover rounded-md max-h-32"
+                />
+              ) : (
+                "Tidak Ada Foto Lama"
+              )}
             </div>
           </ComponentCard>
         </div>
@@ -320,9 +335,7 @@ export default function UpdateEmployee() {
                     { value: "M", label: "Laki-laki" },
                   ]}
                   value={form.employeeGender}
-                  onChange={(v) =>
-                    setForm({ ...form, employeeGender: v })
-                  }
+                  onChange={(v) => setForm({ ...form, employeeGender: v })}
                 />
               </div>
 
@@ -344,9 +357,7 @@ export default function UpdateEmployee() {
               {/* Foto */}
               <div>
                 <Label>Foto Pegawai *</Label>
-
                 <FileInput onChange={handleSelectFile} />
-
                 {previewPict && (
                   <Image
                     src={previewPict}

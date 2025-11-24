@@ -1,6 +1,6 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import FamilyTable from "@/components/family-view/FamilyTable";
+import FamilyTable from "@/components/view/family/FamilyTable";
 // import { Metadata } from "next";
 import React from "react";
 

@@ -1,44 +1,37 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Table, Input, Space, Flex, Image, Spin, InputRef } from "antd";
+import {
+  Table,
+  Input,
+  Space,
+  Flex,
+  Image,
+  Spin,
+  InputRef,
+  message,
+} from "antd";
 import {
   SearchOutlined,
   LoadingOutlined,
   DeleteOutlined,
   EyeOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Highlighter from "react-highlight-words";
-import Badge from "../ui/badge/Badge";
-import Button from "../ui/button/Button";
+import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
 import { API_HOMES, API_REGIONS } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
 import Link from "next/link";
 import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
-
-interface HomeTable {
-  homeId: number;
-  partnerId: number;
-  partnerName: string;
-  partnerPict: string | null;
-  isAlive: boolean;
-  regionId: number;
-  isActive: boolean;
-  employeeId: number;
-  nipNipp: string;
-  employeeName: string;
-  employeePict: string | null;
-  employeeGender: string;
-  waliId: number;
-  waliName: string;
-  childrenCount: number;
-  isUmkm: boolean;
-}
+import { HomeTable } from "@/types/home";
 
 export default function FamilyTable() {
+  const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState<HomeTable[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,13 +49,18 @@ export default function FamilyTable() {
         setData(homes);
       } catch (error) {
         console.error("Error fetching homes:", error);
+        messageApi.error({
+          content: "Gagal mengambil data rumah.",
+          key: "save",
+          duration: 2,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchHomes();
-  }, []);
+  }, [messageApi]);
 
   useEffect(() => {
     const fetchRegions = async () => {
@@ -70,15 +68,22 @@ export default function FamilyTable() {
         const res = await fetchWithAuth(`${API_REGIONS}`);
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
-        const regionsData = camelcaseKeys(json.data, { deep: true }) as Region[];
+        const regionsData = camelcaseKeys(json.data, {
+          deep: true,
+        }) as Region[];
         setRegions(regionsData);
       } catch (error) {
         console.error("Error fetching regions:", error);
+        messageApi.error({
+          content: "Gagal mengambil data wilayah.",
+          key: "save",
+          duration: 2,
+        });
       }
     };
 
     fetchRegions();
-  }, []);
+  }, [messageApi]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getColumnSearchProps = (dataIndex: keyof HomeTable): any => ({
@@ -123,7 +128,10 @@ export default function FamilyTable() {
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
     ),
-    onFilter: (value: string | number | boolean, record: HomeTable): boolean => {
+    onFilter: (
+      value: string | number | boolean,
+      record: HomeTable
+    ): boolean => {
       const fieldValue = record[dataIndex];
       return fieldValue
         ? String(fieldValue).toLowerCase().includes(String(value).toLowerCase())
@@ -178,7 +186,12 @@ export default function FamilyTable() {
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-              N/A
+              <Image
+                src={"/images/user/alt-user.png"}
+                alt={"N/A"}
+                width={40}
+                height={40}
+              />
             </div>
           )}
           <div>
@@ -208,9 +221,13 @@ export default function FamilyTable() {
               className="rounded-full object-cover w-10 h-10"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-              N/A
-            </div>
+            <Image
+              src={"/images/user/alt-user.png"}
+              alt={"N/A"}
+              width={40}
+              height={40}
+              className="rounded-full object-cover w-10 h-10"
+            />
           )}
           <div>
             <span className="flex font-medium text-gray-800 dark:text-white/90">
@@ -279,6 +296,11 @@ export default function FamilyTable() {
               <EyeOutlined />
             </Button>
           </Link>
+          <Link href={`family/edit/${home.homeId}`}>
+            <Button size="xs">
+              <EditOutlined />
+            </Button>
+          </Link>
           <Button size="xs">
             <DeleteOutlined />
           </Button>
@@ -299,6 +321,7 @@ export default function FamilyTable() {
 
   return (
     <div>
+      {contextHolder}
       <div className="overflow-x-auto">
         <Table
           columns={columns}

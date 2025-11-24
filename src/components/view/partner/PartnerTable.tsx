@@ -7,10 +7,11 @@ import {
   LoadingOutlined,
   DeleteOutlined,
   EyeOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import Highlighter from "react-highlight-words";
-import Button from "../ui/button/Button";
+import Button from "@/components/ui/button/Button";
 import { API_PARTNERS, API_REGIONS } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
@@ -18,7 +19,7 @@ import Link from "next/link";
 import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
 import { Partner } from "@/types/partner";
-import Badge from "../ui/badge/Badge";
+import Badge from "@/components/ui/badge/Badge";
 
 export default function PartnerTable() {
   const [data, setData] = useState<Partner[]>([]);
@@ -161,22 +162,23 @@ export default function PartnerTable() {
       title: "Foto",
       dataIndex: "partnerPict",
       key: "partnerPict",
-      width: 100,
       render: (val, partner) =>
         val ? (
-          <center>
-            <Image
-              src={val || "/images/user/alt-user.png"}
-              width={40}
-              height={40}
-              alt={partner.partnerName}
-              className="rounded-full object-cover w-10 h-10"
-            />
-          </center>
+          <Image
+            src={val || "/images/user/alt-user.png"}
+            width={40}
+            height={40}
+            alt={partner.partnerName}
+            className="rounded-full object-cover w-10 h-10"
+          />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
-            N/A
-          </div>
+          <Image
+            src={"/images/user/alt-user.png"}
+            alt={"N/A"}
+            width={40}
+            height={40}
+            className="rounded-full object-cover w-10 h-10"
+          />
         ),
     },
     {
@@ -322,6 +324,11 @@ export default function PartnerTable() {
           <Link href={`partner/view/${partner.id}`}>
             <Button size="xs">
               <EyeOutlined />
+            </Button>
+          </Link>
+          <Link href={`partner/edit/${partner.id}`}>
+            <Button size="xs">
+              <EditOutlined />
             </Button>
           </Link>
           <Button size="xs">

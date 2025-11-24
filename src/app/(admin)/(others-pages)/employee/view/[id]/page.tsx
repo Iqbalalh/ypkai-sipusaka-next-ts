@@ -1,4 +1,4 @@
-import EmployeeDetailCard from "@/components/employee-view/EmployeeInfoCard";
+import EmployeeDetailCard from "@/components/view/employee/EmployeeInfoCard";
 import React from "react";
 
 export default function ViewEmployee() {

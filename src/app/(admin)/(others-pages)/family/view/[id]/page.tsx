@@ -1,4 +1,4 @@
-import FamilyInfoCard from "@/components/family-view/FamilyInfoCard";
+import FamilyInfoCard from "@/components/view/family/FamilyInfoCard";
 import React from "react";
 
 

@@ -209,17 +209,25 @@ export default function UpdatePartner() {
   return (
     <div>
       {contextHolder}
-      <PageBreadcrumb pageTitle="Update Data Pasangan" />
+      <PageBreadcrumb pageTitle="Form Sunting Pasangan" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* LEFT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Form Update Pasangan">
+          <ComponentCard title="Ubah Data Pasangan">
             <div className="space-y-6">
               {/* EMPLOYEE */}
               <div>
-                <Label>Pegawai</Label>
+                <Label>Pegawai *</Label>
                 <Select
+                  showSearch
+                  optionFilterProp="label"
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toString()
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
                   className="w-full"
                   size="large"
                   options={employees}
@@ -229,7 +237,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Nama Pasangan</Label>
+                <Label>Nama Pasangan *</Label>
                 <Input
                   value={form.partnerName}
                   size="large"
@@ -263,7 +271,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Alamat</Label>
+                <Label>Alamat *</Label>
                 <TextArea
                   rows={3}
                   size="large"
@@ -275,7 +283,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Nomor Telepon</Label>
+                <Label>Nomor Telepon *</Label>
                 <Input
                   size="large"
                   value={form.phoneNumber}
@@ -296,15 +304,27 @@ export default function UpdatePartner() {
                 />
               </div>
             </div>
+            <div>
+              <Label>Foto Lama</Label>
+              {form.partnerPict ? (
+                <Image
+                  src={form?.partnerPict || "/images/user/alt-user.png"}
+                  alt="Preview Foto"
+                  className="object-cover rounded-md max-h-32"
+                />
+              ) : (
+                "Tidak Ada Foto Lama"
+              )}
+            </div>
           </ComponentCard>
         </div>
 
         {/* RIGHT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Detail Tambahan">
+          <ComponentCard title="* Wajib Diisi">
             <div className="space-y-6">
               <div>
-                <Label>Wilayah</Label>
+                <Label>Wilayah *</Label>
                 <Select
                   className="w-full"
                   size="large"
@@ -315,7 +335,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Kecamatan</Label>
+                <Label>Kecamatan *</Label>
                 <Select
                   className="w-full"
                   size="large"
@@ -338,7 +358,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Koordinat Rumah</Label>
+                <Label>Koordinat Rumah *</Label>
                 <Input
                   size="large"
                   value={form.homeCoordinate}
@@ -349,7 +369,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Status Aktif</Label>
+                <Label>Status Aktif *</Label>
                 <Select
                   size="large"
                   className="w-full"
@@ -363,7 +383,7 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Status Hidup</Label>
+                <Label>Status Hidup *</Label>
                 <Select
                   size="large"
                   className="w-full"

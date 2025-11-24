@@ -1,21 +1,35 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Table, Input, Space, Flex, Image, Spin, InputRef } from "antd";
+import Link from "next/link";
+import Highlighter from "react-highlight-words";
+import camelcaseKeys from "camelcase-keys";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
+
+import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
+
+import {
+  Table,
+  Input,
+  Space,
+  Flex,
+  Image,
+  Spin,
+  InputRef,
+  message,
+} from "antd";
 import {
   SearchOutlined,
   LoadingOutlined,
   DeleteOutlined,
   EyeOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
-import Highlighter from "react-highlight-words";
-import Badge from "../ui/badge/Badge";
-import Button from "../ui/button/Button";
-import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import camelcaseKeys from "camelcase-keys";
-import Link from "next/link";
+
+import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
+
 import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
 import { Employee } from "@/types/employee";
@@ -27,6 +41,7 @@ export default function EmployeeTable() {
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const searchInput = React.useRef<InputRef>(null);
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -40,13 +55,18 @@ export default function EmployeeTable() {
         setData(employees);
       } catch (error) {
         console.error("Error fetching employees:", error);
+        messageApi.error({
+          content: "Gagal mengambil data pegawai.",
+          key: "save",
+          duration: 2,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchEmployees();
-  }, []);
+  }, [messageApi]);
 
   useEffect(() => {
     const fetchRegions = async () => {
@@ -60,11 +80,16 @@ export default function EmployeeTable() {
         setRegions(regionsData);
       } catch (error) {
         console.error("Error fetching regions:", error);
+        messageApi.error({
+          content: "Gagal mengambil data wilayah.",
+          key: "save",
+          duration: 2,
+        });
       }
     };
 
     fetchRegions();
-  }, []);
+  }, [messageApi]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getColumnSearchProps = (dataIndex: keyof Employee): any => ({
@@ -148,7 +173,7 @@ export default function EmployeeTable() {
 
   const columns: ColumnsType<Employee> = [
     {
-      title: "No.",
+      title: "ID",
       dataIndex: "id",
       key: "id",
       render: (text) => text || "-",
@@ -168,7 +193,12 @@ export default function EmployeeTable() {
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
-            N/A
+            <Image
+              src={"/images/user/alt-user.png"}
+              alt={"N/A"}
+              width={40}
+              height={40}
+            />
           </div>
         ),
     },
@@ -268,6 +298,11 @@ export default function EmployeeTable() {
               <EyeOutlined />
             </Button>
           </Link>
+          <Link href={`employee/edit/${emp.id}`}>
+            <Button size="xs">
+              <EditOutlined />
+            </Button>
+          </Link>
           <Button size="xs">
             <DeleteOutlined />
           </Button>
@@ -288,6 +323,7 @@ export default function EmployeeTable() {
 
   return (
     <div>
+      {contextHolder}
       <div className="overflow-x-auto">
         <Table
           columns={columns}

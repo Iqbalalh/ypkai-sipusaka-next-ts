@@ -10,6 +10,25 @@ export interface Home {
   postalCode: string | null;
 }
 
+export interface HomeTable {
+  homeId: number;
+  partnerId: number;
+  partnerName: string;
+  partnerPict: string | null;
+  isAlive: boolean;
+  regionId: number;
+  isActive: boolean;
+  employeeId: number;
+  nipNipp: string;
+  employeeName: string;
+  employeePict: string | null;
+  employeeGender: string;
+  waliId: number;
+  waliName: string;
+  childrenCount: number;
+  isUmkm: boolean;
+}
+
 
 export interface HomeDetail {
   // =======================

@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Button from "../ui/button/Button";
-import { Image, Spin } from "antd";
+import Button from "@/components/ui/button/Button";
+import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_PARTNERS } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
-import Badge from "../ui/badge/Badge";
+import Badge from "@/components/ui/badge/Badge";
 import camelcaseKeys from "camelcase-keys";
 import { ApiResponseSingle } from "@/types/api-response";
-import { InfoItem } from "../helper/InfoItemHelper";
+import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Partner } from "@/types/partner";
 
 export default function PartnerInfoCard() {
+  const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState<Partner | null>(null);
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -29,14 +30,19 @@ export default function PartnerInfoCard() {
         const partnerData = camelcaseKeys(partner.data, { deep: true });
         setData(partnerData);
       } catch (error) {
-        console.error("Error fetching home details:", error);
+        console.error("Error fetching partner details:", error);
+        messageApi.error({
+          content: "Gagal mengambil data pasangan.",
+          key: "save",
+          duration: 2,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchPartner();
-  }, [id]);
+  }, [id, messageApi]);
 
   if (loading) {
     return (
@@ -48,6 +54,7 @@ export default function PartnerInfoCard() {
 
   return (
     <>
+      {contextHolder}
       {/* Partner */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
         <div>{data?.isUmkm ? <Badge color="info">UMKM</Badge> : ""}</div>

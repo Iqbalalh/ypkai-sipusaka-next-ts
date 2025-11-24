@@ -1,22 +1,19 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from "react";
+
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+
 import {
-  // BoxCubeIcon,
-  // CalenderIcon,
-  ChevronDownIcon,
-  GridIcon,
-  HorizontaLDots,
-  ListIcon,
-  // PageIcon,
-  // PieChartIcon,
-  PlugInIcon,
-  // TableIcon,
-  // UserCircleIcon,
-} from "../icons/index";
+  FaShop,
+  FaChildReaching,
+  FaHouseChimney,
+  FaChartSimple,
+  FaMap,
+} from "react-icons/fa6";
+import { ChevronDownIcon, HorizontaLDots } from "../icons/index";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -28,7 +25,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <FaChartSimple className="text-2xl" />,
     name: "Dashboard",
     subItems: [{ name: "Analitik", path: "/", pro: false }],
   },
@@ -36,11 +33,6 @@ const navItems: NavItem[] = [
   //   icon: <CalenderIcon />,
   //   name: "Calendar",
   //   path: "/calendar",
-  // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "User Profile",
-  //   path: "/profile",
   // },
 
   // {
@@ -50,13 +42,23 @@ const navItems: NavItem[] = [
   // },
   {
     name: "Keluarga Asuh",
-    icon: <ListIcon />,
+    icon: <FaHouseChimney className="text-2xl" />,
     subItems: [
-      { name: "Keluarga Asuh", path: "/family", pro: false },
+      { name: "Keluarga", path: "/family", pro: false },
       { name: "Pegawai", path: "/employee", pro: false },
       { name: "Pasangan", path: "/partner", pro: false },
       { name: "Wali", path: "/wali", pro: false },
     ],
+  },
+  {
+    icon: <FaChildReaching className="text-2xl" />,
+    name: "Anak Asuh",
+    subItems: [{ name: "Anak", path: "/children", pro: false }],
+  },
+  {
+    icon: <FaShop className="text-2xl" />,
+    name: "UMKM",
+    subItems: [{ name: "Usaha", path: "/umkm", pro: false }],
   },
   // {
   //   name: "Tables",
@@ -95,7 +97,7 @@ const othersItems: NavItem[] = [
   //   ],
   // },
   {
-    icon: <PlugInIcon />,
+    icon: <FaMap className="text-2xl" />,
     name: "Wilayah",
     subItems: [
       { name: "Sign In", path: "/signin", pro: false },
@@ -316,7 +318,7 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${
+        className={`py-5 flex ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
@@ -331,7 +333,7 @@ const AppSidebar: React.FC = () => {
                   width={50}
                   height={5}
                 />
-                <p className="dark:hidden">Yayasan Pusaka KAI</p>
+                <p className="dark:hidden font-bold text-3xl">SIPUSAKA</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -342,7 +344,9 @@ const AppSidebar: React.FC = () => {
                   width={50}
                   height={5}
                 />
-                <p className="hidden dark:block text-white">Yayasan Pusaka KAI</p>
+                <p className="hidden dark:block text-white font-bold text-3xl">
+                  SIPUSAKA
+                </p>
               </div>
             </>
           ) : (

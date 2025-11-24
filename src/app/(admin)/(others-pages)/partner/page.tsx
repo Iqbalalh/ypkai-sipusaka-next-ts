@@ -1,6 +1,6 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import PartnerTable from "@/components/partner-view/PartnerTable";
+import PartnerTable from "@/components/view/partner/PartnerTable";
 import React from "react";
 
 

@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Button from "../ui/button/Button";
-import { Image, Spin } from "antd";
+import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_HOMES_DETAILS } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
-import Badge from "../ui/badge/Badge";
+import Badge from "@/components/ui/badge/Badge";
+import Button from "@/components/ui/button/Button";
 import camelcaseKeys from "camelcase-keys";
 import { ApiResponseSingle } from "@/types/api-response";
 import { HomeDetail } from "@/types/home";
-import { InfoItem } from "../helper/InfoItemHelper";
+import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 
 export default function FamilyInfoCard() {
+  const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState<HomeDetail | null>(null);
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -28,16 +29,20 @@ export default function FamilyInfoCard() {
         const home: ApiResponseSingle<HomeDetail> = await res.json();
         const homeData = camelcaseKeys(home.data, { deep: true });
         setData(homeData);
-        console.log(homeData.childrenData);
       } catch (error) {
         console.error("Error fetching home details:", error);
+        messageApi.error({
+          content: "Gagal mengambil data keluarga.",
+          key: "save",
+          duration: 2,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchHomes();
-  }, [id]);
+  }, [id, messageApi]);
 
   if (loading) {
     return (
@@ -49,6 +54,7 @@ export default function FamilyInfoCard() {
 
   return (
     <>
+      {contextHolder}
       {/* Home Info */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mb-6">
         <h4 className="text-2xl gap-4 flex font-semibold text-gray-800 dark:text-white/90 mb-4">
@@ -349,9 +355,7 @@ export default function FamilyInfoCard() {
                   </div>
 
                   <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                    <Button variant="outline">
-                      Edit
-                    </Button>
+                    <Button variant="outline">Edit</Button>
                   </div>
                 </div>
               </div>
@@ -441,9 +445,7 @@ export default function FamilyInfoCard() {
                 </div>
 
                 <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                  <Button variant="outline">
-                    Edit
-                  </Button>
+                  <Button variant="outline">Edit</Button>
                 </div>
               </div>
             </div>

@@ -1,22 +1,14 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import WaliTable from "@/components/wali-view/WaliTable";
-// import { Metadata } from "next";
+import WaliTable from "@/components/view/wali/WaliTable";
 import React from "react";
-
-// export const metadata: Metadata = {
-//   title: "Next.js Basic Table | TailAdmin - Next.js Dashboard Template",
-//   description:
-//     "This is Next.js Basic Table  page for TailAdmin  Tailwind CSS Admin Dashboard Template",
-//   // other metadata
-// };
 
 export default function FamiliyTables() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Wali" />
       <div className="space-y-6">
-        <ComponentCard title="Wali">
+        <ComponentCard title="Wali" createName="+" createUrl="/wali/create">
           <WaliTable />
         </ComponentCard>
       </div>

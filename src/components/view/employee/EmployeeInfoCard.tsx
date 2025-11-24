@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Button from "../ui/button/Button";
-import { Image, Spin } from "antd";
+import Button from "@/components/ui/button/Button";
+import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_EMPLOYEES } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
-import Badge from "../ui/badge/Badge";
+import Badge from "@/components/ui/badge/Badge";
 import camelcaseKeys from "camelcase-keys";
 import { ApiResponseSingle } from "@/types/api-response";
-import { InfoItem } from "../helper/InfoItemHelper";
+import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Employee } from "@/types/employee";
 
 export default function EmployeeInfoCard() {
+  const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState<Employee | null>(null);
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -30,13 +31,18 @@ export default function EmployeeInfoCard() {
         setData(employeeData);
       } catch (error) {
         console.error("Error fetching home details:", error);
+        messageApi.error({
+          content: "Gagal mengambil data pegawai.",
+          key: "save",
+          duration: 2,
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchHomes();
-  }, [id]);
+  }, [id, messageApi]);
 
   if (loading) {
     return (
@@ -49,6 +55,7 @@ export default function EmployeeInfoCard() {
   return (
     <>
       {/* Employee */}
+      {contextHolder}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
