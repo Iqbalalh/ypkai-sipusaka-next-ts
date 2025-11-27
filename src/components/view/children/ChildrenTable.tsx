@@ -197,7 +197,7 @@ export default function ChildrenTable() {
       dataIndex: "homeId",
       key: "homeId",
       width: 80,
-      sorter: (a, b) => a.homeId - b.homeId,
+      sorter: (a, b) => (a.homeId ?? 0) - (b.homeId ?? 0),
     },
     {
       title: "Yatim",

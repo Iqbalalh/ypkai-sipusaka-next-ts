@@ -212,16 +212,18 @@ export default function WaliTable() {
       dataIndex: "createdAt",
       key: "createdAt",
       sorter: (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      render: (val) => (val ? new Date(val).toLocaleString("id-ID") : "-"),
+        (new Date(a.createdAt ?? 0).getTime() || 0) -
+        (new Date(b.createdAt ?? 0).getTime() || 0),
+      render: (val) => (val ? new Date(val).toLocaleString() : "-"),
     },
     {
       title: "Diperbarui Pada",
       dataIndex: "updatedAt",
       key: "updatedAt",
       sorter: (a, b) =>
-        new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime(),
-      render: (val) => (val ? new Date(val).toLocaleString("id-ID") : "-"),
+        (new Date(a.updatedAt ?? 0).getTime() || 0) -
+        (new Date(b.updatedAt ?? 0).getTime() || 0),
+      render: (val) => (val ? new Date(val).toLocaleString() : "-"),
     },
     {
       title: "Aksi",

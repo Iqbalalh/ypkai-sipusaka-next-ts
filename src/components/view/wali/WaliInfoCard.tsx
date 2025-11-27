@@ -26,7 +26,7 @@ export default function WaliInfoCard() {
         const res = await fetchWithAuth(`${API_WALI}/${id}`);
         if (!res.ok) throw new Error("Failed to fetch wali details");
         const wali: ApiResponseSingle<Wali> = await res.json();
-        const waliData = camelcaseKeys(wali.data, { deep: true });
+        const waliData = camelcaseKeys(wali.data, { deep: true }) as Wali;
         setData(waliData);
       } catch (error) {
         console.error("Error fetching wali details:", error);

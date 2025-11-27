@@ -27,7 +27,7 @@ export default function FamilyInfoCard() {
         const res = await fetchWithAuth(`${API_HOMES_DETAILS}/${id}`);
         if (!res.ok) throw new Error("Failed to fetch home details");
         const home: ApiResponseSingle<HomeDetail> = await res.json();
-        const homeData = camelcaseKeys(home.data, { deep: true });
+        const homeData = camelcaseKeys(home.data, { deep: true }) as HomeDetail;
         setData(homeData);
       } catch (error) {
         console.error("Error fetching home details:", error);

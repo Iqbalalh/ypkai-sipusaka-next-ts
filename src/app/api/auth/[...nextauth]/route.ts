@@ -13,7 +13,7 @@ interface LoginResponse {
   message?: string;
 }
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -24,19 +24,30 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null;
 
-        const res = await fetch(API_AUTH_LOGIN, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: credentials.username,
-            password: credentials.password,
-          }),
-        });
+        try {
+            const res = await fetch(API_AUTH_LOGIN, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: credentials.username,
+                    password: credentials.password,
+                }),
+            });
+    
+            const data: LoginResponse = await res.json();
+    
+            if (!res.ok) {
+                // Catat error di server log (opsional)
+                console.error("Authentication failed:", data.message || "Invalid credentials");
+                return null; 
+            }
+            
+            return { ...data.user, token: data.token };
 
-        const data: LoginResponse = await res.json();
-
-        if (!res.ok) throw new Error(data.message || "Login failed");
-        return { ...data.user, token: data.token };
+        } catch (error) {
+            console.error("Network or Fetch Error during login:", error);
+            return null;
+        }
       },
     }),
   ],

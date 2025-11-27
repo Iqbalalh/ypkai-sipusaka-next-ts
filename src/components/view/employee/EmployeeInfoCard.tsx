@@ -27,7 +27,9 @@ export default function EmployeeInfoCard() {
         const res = await fetchWithAuth(`${API_EMPLOYEES}/${id}`);
         if (!res.ok) throw new Error("Failed to fetch home details");
         const home: ApiResponseSingle<Employee> = await res.json();
-        const employeeData = camelcaseKeys(home.data, { deep: true });
+        const employeeData = camelcaseKeys(home.data, {
+          deep: true,
+        }) as Employee;
         setData(employeeData);
       } catch (error) {
         console.error("Error fetching home details:", error);

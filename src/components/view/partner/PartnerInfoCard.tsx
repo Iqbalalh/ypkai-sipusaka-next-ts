@@ -27,7 +27,7 @@ export default function PartnerInfoCard() {
         const res = await fetchWithAuth(`${API_PARTNERS}/${id}`);
         if (!res.ok) throw new Error("Failed to fetch partner details");
         const partner: ApiResponseSingle<Partner> = await res.json();
-        const partnerData = camelcaseKeys(partner.data, { deep: true });
+        const partnerData = camelcaseKeys(partner.data, { deep: true }) as Partner;
         setData(partnerData);
       } catch (error) {
         console.error("Error fetching partner details:", error);
