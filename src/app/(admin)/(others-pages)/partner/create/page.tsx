@@ -297,7 +297,7 @@ export default function CreatePartner() {
                 <Label>Alamat *</Label>
                 <TextArea
                   size="large"
-                  value={form.address}
+                  value={form.address ?? ""}
                   rows={4}
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })

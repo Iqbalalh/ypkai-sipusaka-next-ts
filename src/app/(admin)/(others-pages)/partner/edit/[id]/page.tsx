@@ -275,7 +275,7 @@ export default function UpdatePartner() {
                 <TextArea
                   rows={3}
                   size="large"
-                  value={form.address}
+                  value={form.address ?? ""}
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
                   }

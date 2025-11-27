@@ -559,7 +559,7 @@ export default function CreateHome() {
                 <TextArea
                   size="large"
                   rows={4}
-                  value={form.employee.notes}
+                  value={form.employee.notes ?? ""}
                   onChange={(e) => updateEmployee("notes", e.target.value)}
                 />
               </div>
@@ -632,7 +632,7 @@ export default function CreateHome() {
                 <Label>Alamat *</Label>
                 <TextArea
                   size="large"
-                  value={form.partner.address}
+                  value={form.partner.address ?? ""}
                   rows={4}
                   onChange={(e) => updatePartner("address", e.target.value)}
                 />
@@ -1000,7 +1000,7 @@ export default function CreateHome() {
               <Label>Catatan</Label>
               <TextArea
                 rows={2}
-                value={child.notes}
+                value={child.notes ?? ""}
                 onChange={(e) => updateChild(index, { notes: e.target.value })}
               />
 

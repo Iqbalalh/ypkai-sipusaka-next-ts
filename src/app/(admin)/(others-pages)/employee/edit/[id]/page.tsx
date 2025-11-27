@@ -285,7 +285,7 @@ export default function UpdateEmployee() {
                 <TextArea
                   size="large"
                   rows={4}
-                  value={form.notes}
+                  value={form.notes ?? ""}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
