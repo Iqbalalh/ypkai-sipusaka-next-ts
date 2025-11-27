@@ -4,9 +4,9 @@ export interface Employee {
   employeeName: string;
   deathCause: string;
   lastPosition?: string;
-  regionId: number | null;
+  regionId?: number | null;
   notes?: string | null;
-  employeeGender: "M" | "F"
+  employeeGender: "M" | "F" | string;
   isAccident: boolean;
   employeePict?: string | null;
   createdAt?: string | null; // Timestamp ISO
@@ -14,4 +14,5 @@ export interface Employee {
 
   // Non-native Field
   regionName?: string | null;
+  employeePictFile?: File | null;
 }

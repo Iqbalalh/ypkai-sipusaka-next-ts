@@ -1,4 +1,7 @@
 import { Children } from "./children";
+import { Employee } from "./employee";
+import { Partner } from "./partner";
+import { Wali } from "./wali";
 
 export interface Home {
   id: number;
@@ -29,7 +32,6 @@ export interface HomeTable {
   isUmkm: boolean;
 }
 
-
 export interface HomeDetail {
   // =======================
   // 🏠 HOME
@@ -49,7 +51,7 @@ export interface HomeDetail {
   employeeDeathCause: string | null;
   employeeLastPosition: string | null;
   employeeRegionId: number | null;
-  employeeRegionName: string | null;      // ← DITAMBAHKAN
+  employeeRegionName: string | null; // ← DITAMBAHKAN
   employeeNotes: string | null;
   employeeGender: "M" | "F" | null;
   employeeIsAccident: boolean | null;
@@ -66,7 +68,7 @@ export interface HomeDetail {
   partnerJob: string | null;
   partnerNik: string | null;
   partnerRegionId: number | null;
-  partnerRegionName: string | null;       // ← DITAMBAHKAN
+  partnerRegionName: string | null; // ← DITAMBAHKAN
   partnerAddress: string | null;
   partnerSubdistrictId: number | null;
   partnerPostalCode: string | null;
@@ -109,4 +111,18 @@ export interface HomeDetail {
   // 💼 UMKM
   // =======================
   isUmkm: boolean;
+}
+
+export interface Family {
+  id?: number | null;
+  partnerId?: number | null;
+  employeeId?: number | null;
+  waliId?: number | null;
+  createdAt?: string; // ISO timestamp
+  regionId?: number | null;
+  postalCode?: string | null;
+  employee: Employee;
+  partner: Partner;
+  wali: Wali;
+  childrens?: Children[];
 }

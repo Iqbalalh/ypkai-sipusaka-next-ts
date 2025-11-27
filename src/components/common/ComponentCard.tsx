@@ -5,11 +5,12 @@ import Button from "../ui/button/Button";
 
 interface ComponentCardProps {
   title: string;
-  children: React.ReactNode;
-  className?: string; // Additional custom classes for styling
+  children?: React.ReactNode;
+  className?: string;
   createName?: string;
   createUrl?: string;
-  desc?: string; // Description text
+  desc?: string;
+  rightComponent?: React.ReactNode;
 }
 
 const ComponentCard: React.FC<ComponentCardProps> = ({
@@ -19,27 +20,36 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   createName,
   className = "",
   desc = "",
+  rightComponent,
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
   return (
     <div
       className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${className}`}
     >
       {/* Card Header */}
       <div className="px-6 py-5">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-4">
           <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
             {title}
           </h3>
-          {createUrl && (
-            <div>
+
+          <div className="flex items-center gap-3">
+            {rightComponent && <div>{rightComponent}</div>}
+
+            {createUrl && (
               <Link href={createUrl}>
-                <Button onClick={() => setIsLoading(true)} disabled={isLoading} size="sm">
+                <Button
+                  onClick={() => setIsLoading(true)}
+                  disabled={isLoading}
+                  size="sm"
+                >
                   {createName}
                 </Button>
-              </Link>{" "}
-            </div>
-          )}
+              </Link>
+            )}
+          </div>
         </div>
 
         {desc && (

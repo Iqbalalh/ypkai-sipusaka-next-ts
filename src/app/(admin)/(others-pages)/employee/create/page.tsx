@@ -237,16 +237,20 @@ export default function CreateEmployee() {
                 />
               </div>
 
-              {/* Death Cause */}
+              {/* isAccident */}
               <div>
-                <Label>Penyebab Kematian</Label>
-                <Input
-                  className="w-full"
+                <Label>PLH / Non-PLH *</Label>
+                <Select
                   size="large"
-                  value={form.deathCause}
-                  onChange={(e) =>
-                    setForm({ ...form, deathCause: e.target.value })
-                  }
+                  showSearch
+                  optionFilterProp="label"
+                  style={{ width: "100%" }}
+                  options={[
+                    { value: true, label: "PLH" },
+                    { value: false, label: "Non-PLH" },
+                  ]}
+                  value={form.isAccident}
+                  onChange={(value) => setForm({ ...form, isAccident: value })}
                 />
               </div>
 
@@ -314,20 +318,16 @@ export default function CreateEmployee() {
                 />
               </div>
 
-              {/* isAccident */}
+              {/* Death Cause */}
               <div>
-                <Label>PLH / Non-PLH *</Label>
-                <Select
+                <Label>Penyebab Kematian</Label>
+                <Input
+                  className="w-full"
                   size="large"
-                  showSearch
-                  optionFilterProp="label"
-                  style={{ width: "100%" }}
-                  options={[
-                    { value: true, label: "PLH" },
-                    { value: false, label: "Non-PLH" },
-                  ]}
-                  value={form.isAccident}
-                  onChange={(value) => setForm({ ...form, isAccident: value })}
+                  value={form.deathCause}
+                  onChange={(e) =>
+                    setForm({ ...form, deathCause: e.target.value })
+                  }
                 />
               </div>
 

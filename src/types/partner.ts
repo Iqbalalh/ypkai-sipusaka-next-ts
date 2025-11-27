@@ -1,7 +1,7 @@
 export interface Partner {
   id?: number;
-  employeeId: number | null;
-  partnerName: string;
+  employeeId?: number | null;
+  partnerName?: string;
   partnerJob?: string;
   partnerNik?: string;
   regionId: number | null;
@@ -20,4 +20,5 @@ export interface Partner {
   // Non-native Field
   isUmkm?: boolean;
   regionName?: string | null;
+  partnerPictFile?: File | null;
 }

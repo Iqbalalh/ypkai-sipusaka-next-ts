@@ -96,7 +96,7 @@ export default function CreatePartner() {
       messageApi.error("Pegawai wajib dipilih.");
       return;
     }
-    if (!form.partnerName.trim()) {
+    if (!form.partnerName) {
       messageApi.error("Nama pasangan wajib diisi.");
       return;
     }
