@@ -43,9 +43,9 @@ export default function CreateHome() {
   useEffect(() => {
     const loadData = async () => {
       const [regRes, empRes, subdRes] = await Promise.all([
-        fetchWithAuth(API_REGIONS),
+        fetchWithAuth(API_REGIONS+"/list"),
         fetchWithAuth(`${API_EMPLOYEES}/list`),
-        fetchWithAuth(`${API_SUBDISTRICTS}`),
+        fetchWithAuth(`${API_SUBDISTRICTS}/list`),
       ]);
 
       const regionData = camelcaseKeys((await regRes.json()).data, {

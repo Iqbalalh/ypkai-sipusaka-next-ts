@@ -65,7 +65,7 @@ export default function FamilyTable() {
   useEffect(() => {
     const fetchRegions = async () => {
       try {
-        const res = await fetchWithAuth(`${API_REGIONS}`);
+        const res = await fetchWithAuth(`${API_REGIONS}`+"/list");
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
         const regionsData = camelcaseKeys(json.data, {
@@ -296,7 +296,7 @@ export default function FamilyTable() {
               <EyeOutlined />
             </Button>
           </Link>
-          <Link href={`family/edit/${home.homeId}`}>
+          <Link href={`family/view/${home.homeId}`}>
             <Button size="xs">
               <EditOutlined />
             </Button>

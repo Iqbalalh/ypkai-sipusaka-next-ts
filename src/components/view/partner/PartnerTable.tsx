@@ -52,7 +52,7 @@ export default function PartnerTable() {
   useEffect(() => {
     const fetchRegions = async () => {
       try {
-        const res = await fetchWithAuth(`${API_REGIONS}`);
+        const res = await fetchWithAuth(`${API_REGIONS}`+"/list");
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
         const regionsData = camelcaseKeys(json.data, {

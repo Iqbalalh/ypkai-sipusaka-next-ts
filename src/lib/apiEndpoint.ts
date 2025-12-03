@@ -22,5 +22,8 @@ export const API_WALI = `${baseUrl}/api/wali`;
 // Subdistricts
 export const API_SUBDISTRICTS = `${baseUrl}/api/subdistricts`;
 
-//
-export const API_CHILDRENS = `${baseUrl}/api/childrens`
+// Childrens
+export const API_CHILDRENS = `${baseUrl}/api/childrens`;
+
+// UMKM
+export const API_UMKM = `${baseUrl}/api/umkm`;

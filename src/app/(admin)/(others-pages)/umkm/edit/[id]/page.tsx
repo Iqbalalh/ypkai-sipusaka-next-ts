@@ -9,51 +9,65 @@ import { Image, Select, Input, message, Flex, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
 import {
-  API_PARTNERS,
+  API_UMKM,
   API_REGIONS,
+  API_PARTNERS,
   API_EMPLOYEES,
+  API_WALI,
+  API_CHILDRENS,
   API_SUBDISTRICTS,
 } from "@/lib/apiEndpoint";
+
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Option } from "@/components/form/Select";
-import { Employee } from "@/types/employee";
 import { Region } from "@/types/region";
 import { Subdistricts } from "@/types/subdistrict";
 import { Partner } from "@/types/partner";
+import { Employee } from "@/types/employee";
 import { useParams, useRouter } from "next/navigation";
+import { Umkm } from "@/types/umkm";
+import { Wali } from "@/types/wali";
+import { Children } from "@/types/children";
 
 const { TextArea } = Input;
 
-export default function UpdatePartner() {
+export default function UpdateUmkm() {
   const params = useParams();
   const router = useRouter();
-  const partnerId = params.id;
-
-  const [regions, setRegions] = useState<Option[]>([]);
-  const [employees, setEmployees] = useState<Option[]>([]);
-  const [subdistricts, setSubdistricts] = useState<Option[]>([]);
-
-  const [previewPict, setPreviewPict] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const umkmId = params.id;
 
   const [messageApi, contextHolder] = message.useMessage();
 
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  // FORM STATE
-  const [form, setForm] = useState<Partner | null>(null);
+  const [previewPict, setPreviewPict] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
-  // VALIDASI FILE
+  // Select Options
+  const [regions, setRegions] = useState<Option[]>([]);
+  const [subdistricts, setSubdistricts] = useState<Option[]>([]);
+  const [partners, setPartners] = useState<Option[]>([]);
+  const [employees, setEmployees] = useState<Option[]>([]);
+  const [wali, setWali] = useState<Option[]>([]);
+  const [childrens, setChildrens] = useState<Option[]>([]);
+
+  // Form state
+  const [form, setForm] = useState<Umkm | null>(null);
+
+  const toSnake = (str: string) =>
+    str.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
+
+  // FILE VALIDATION
   const validateFile = (file: File) => {
     const allowed = ["image/jpeg", "image/png", "image/webp"];
     const maxSize = 1 * 1024 * 1024;
 
     if (!allowed.includes(file.type)) {
-      messageApi.error("Format tidak valid.");
+      messageApi.error("Format gambar tidak valid.");
       return false;
     }
     if (file.size > maxSize) {
@@ -66,45 +80,71 @@ export default function UpdatePartner() {
   const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     if (!validateFile(file)) return;
 
     setPhotoFile(file);
     setPreviewPict(URL.createObjectURL(file));
   };
 
-  const toSnake = (str: string) =>
-    str.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
-
-  // ============================
+  // =====================
   // FETCH DATA
-  // ============================
+  // =====================
   useEffect(() => {
     const loadAll = async () => {
       try {
-        const [regRes, empRes, subdRes, parRes] = await Promise.all([
-          fetchWithAuth(API_REGIONS+"/list"),
-          fetchWithAuth(`${API_EMPLOYEES}/list`),
-          fetchWithAuth(API_SUBDISTRICTS+"/list"),
-          fetchWithAuth(`${API_PARTNERS}/${partnerId}`),
-        ]);
+        const [regRes, subRes, partRes, empRes, waliRes, childRes, umkmRes] =
+          await Promise.all([
+            fetchWithAuth(API_REGIONS + "/list"),
+            fetchWithAuth(API_SUBDISTRICTS + "/list"),
+            fetchWithAuth(API_PARTNERS + "/list"),
+            fetchWithAuth(API_EMPLOYEES + "/list"),
+            fetchWithAuth(API_WALI + "/list"),
+            fetchWithAuth(API_CHILDRENS + "/list"),
+            fetchWithAuth(`${API_UMKM}/${umkmId}`),
+          ]);
 
         const regionData = camelcaseKeys((await regRes.json()).data, {
+          deep: true,
+        });
+        const subData = camelcaseKeys((await subRes.json()).data, {
+          deep: true,
+        });
+        const partnerData = camelcaseKeys((await partRes.json()).data, {
           deep: true,
         });
         const employeeData = camelcaseKeys((await empRes.json()).data, {
           deep: true,
         });
-        const subdistrictData = camelcaseKeys((await subdRes.json()).data, {
+        const waliData = camelcaseKeys((await waliRes.json()).data, {
           deep: true,
         });
-        const partnerData = camelcaseKeys((await parRes.json()).data, {
+        const childrenData = camelcaseKeys((await childRes.json()).data, {
+          deep: true,
+        });
+        const umkmData = camelcaseKeys((await umkmRes.json()).data, {
           deep: true,
         });
 
+        // Fill options
         setRegions(
           regionData.map((r: Region) => ({
             value: r.regionId,
             label: r.regionName,
+          }))
+        );
+
+        setSubdistricts(
+          subData.map((s: Subdistricts) => ({
+            value: s.subdistrictId,
+            label: s.subdistrictName,
+          }))
+        );
+
+        setPartners(
+          partnerData.map((p: Partner) => ({
+            value: p.id,
+            label: p.partnerName,
           }))
         );
 
@@ -115,31 +155,38 @@ export default function UpdatePartner() {
           }))
         );
 
-        setSubdistricts(
-          subdistrictData.map((e: Subdistricts) => ({
-            value: e.subdistrictId,
-            label: e.subdistrictName,
+        setWali(
+          waliData.map((w: Wali) => ({
+            value: w.id,
+            label: w.waliName,
+          }))
+        );
+
+        setChildrens(
+          childrenData.map((c: Children) => ({
+            value: c.id,
+            label: c.childrenName,
           }))
         );
 
         // Set form default
         setForm({
-          ...partnerData,
+          ...umkmData,
         });
 
-        if (partnerData.photoUrl) {
-          setPreviewPict(partnerData.photoUrl);
+        if (umkmData.photoUrl) {
+          setPreviewPict(umkmData.photoUrl);
         }
 
         setLoading(false);
       } catch (err) {
         console.error(err);
-        messageApi.error("Gagal memuat data.");
+        messageApi.error("Gagal memuat data UMKM.");
       }
     };
 
     loadAll();
-  }, [messageApi, partnerId]);
+  }, [messageApi, umkmId]);
 
   if (loading || !form)
     return (
@@ -151,9 +198,9 @@ export default function UpdatePartner() {
       </div>
     );
 
-  // ============================
+  // =====================
   // SUBMIT UPDATE
-  // ============================
+  // =====================
   const handleUpdate = async () => {
     setSubmitLoading(true);
 
@@ -168,18 +215,12 @@ export default function UpdatePartner() {
 
       Object.entries(form).forEach(([key, value]) => {
         if (value === null || value === undefined) return;
-
-        let finalVal = value;
-        if (key === "isActive" || key === "isAlive") {
-          finalVal = value ? 1 : 0;
-        }
-
-        fd.append(toSnake(key), String(finalVal));
+        fd.append(toSnake(key), String(value));
       });
 
       if (photoFile) fd.append("photo", photoFile);
 
-      const res = await fetchWithAuth(`${API_PARTNERS}/${partnerId}`, {
+      const res = await fetchWithAuth(`${API_UMKM}/${umkmId}`, {
         method: "PATCH",
         body: fd,
       });
@@ -196,125 +237,81 @@ export default function UpdatePartner() {
       console.error(err);
       messageApi.error({
         key: "update",
-        content: "Gagal menyimpan perubahan.",
+        content: "Gagal memperbarui UMKM.",
       });
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // ============================
-  // RENDER
-  // ============================
+  // =====================
+  // FORM UI
+  // =====================
   return (
     <div>
       {contextHolder}
-      <PageBreadcrumb pageTitle="Form Sunting Pasangan" />
+      <PageBreadcrumb pageTitle="Form Sunting UMKM" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* LEFT FORM */}
         <div className="space-y-6">
-          <ComponentCard title="Ubah Data Pasangan">
+          <ComponentCard title="Ubah Data UMKM">
             <div className="space-y-6">
-              {/* EMPLOYEE */}
               <div>
-                <Label>Pegawai *</Label>
-                <Select
-                  showSearch
-                  optionFilterProp="label"
-                  filterOption={(input, option) =>
-                    (option?.label ?? "")
-                      .toString()
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                  className="w-full"
-                  size="large"
-                  options={employees}
-                  value={form.employeeId}
-                  onChange={(v) => setForm({ ...form, employeeId: v })}
-                />
-              </div>
-
-              <div>
-                <Label>Nama Pasangan *</Label>
-                <Input
-                  value={form.partnerName}
-                  size="large"
-                  onChange={(e) =>
-                    setForm({ ...form, partnerName: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label>Pekerjaan</Label>
-                <Input
-                  value={form.partnerJob}
-                  size="large"
-                  onChange={(e) =>
-                    setForm({ ...form, partnerJob: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label>NIK</Label>
+                <Label>Pemilik *</Label>
                 <Input
                   size="large"
-                  type="number"
-                  value={form.partnerNik}
+                  value={form.ownerName}
                   onChange={(e) =>
-                    setForm({ ...form, partnerNik: e.target.value })
+                    setForm({ ...form, ownerName: e.target.value })
                   }
                 />
               </div>
 
               <div>
-                <Label>Alamat *</Label>
+                <Label>Nama UMKM *</Label>
+                <Input
+                  size="large"
+                  value={form.businessName}
+                  onChange={(e) =>
+                    setForm({ ...form, businessName: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Alamat</Label>
                 <TextArea
                   rows={3}
                   size="large"
-                  value={form.address ?? ""}
+                  value={form.businessAddress ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, address: e.target.value })
+                    setForm({ ...form, businessAddress: e.target.value })
                   }
                 />
               </div>
 
               <div>
-                <Label>Nomor Telepon *</Label>
+                <Label>Jenis Usaha</Label>
                 <Input
                   size="large"
-                  value={form.phoneNumber}
+                  value={form.businessType ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, phoneNumber: e.target.value })
+                    setForm({ ...form, businessType: e.target.value })
                   }
                 />
               </div>
 
               <div>
-                <Label>Nomor Telepon Alternatif</Label>
+                <Label>Produk</Label>
                 <Input
                   size="large"
-                  value={form.phoneNumberAlt}
+                  value={form.products ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, phoneNumberAlt: e.target.value })
+                    setForm({ ...form, products: e.target.value })
                   }
                 />
               </div>
-            </div>
-            <div>
-              <Label>Foto Lama</Label>
-              {form.partnerPict ? (
-                <Image
-                  src={form?.partnerPict || "/images/user/alt-user.png"}
-                  alt="Preview Foto"
-                  className="object-cover rounded-md max-h-32"
-                />
-              ) : (
-                "Tidak Ada Foto Lama"
-              )}
             </div>
           </ComponentCard>
         </div>
@@ -349,8 +346,7 @@ export default function UpdatePartner() {
                 <Label>Kode Pos</Label>
                 <Input
                   size="large"
-                  type="number"
-                  value={form.postalCode}
+                  value={form.postalCode ?? ""}
                   onChange={(e) =>
                     setForm({ ...form, postalCode: e.target.value })
                   }
@@ -358,46 +354,58 @@ export default function UpdatePartner() {
               </div>
 
               <div>
-                <Label>Koordinat Rumah *</Label>
+                <Label>Koordinat UMKM *</Label>
                 <Input
                   size="large"
-                  value={form.homeCoordinate}
+                  value={form.umkmCoordinate ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, homeCoordinate: e.target.value })
+                    setForm({ ...form, umkmCoordinate: e.target.value })
                   }
                 />
               </div>
 
               <div>
-                <Label>Status Aktif *</Label>
+                <Label>Pasangan (Opsional)</Label>
                 <Select
                   size="large"
-                  className="w-full"
-                  value={form.isActive}
-                  options={[
-                    { value: true, label: "Aktif" },
-                    { value: false, label: "Tidak Aktif" },
-                  ]}
-                  onChange={(v) => setForm({ ...form, isActive: v })}
+                  options={partners}
+                  value={form.partnerId}
+                  onChange={(v) => setForm({ ...form, partnerId: v })}
                 />
               </div>
 
               <div>
-                <Label>Status Hidup *</Label>
+                <Label>Pegawai (Opsional)</Label>
                 <Select
                   size="large"
-                  className="w-full"
-                  value={form.isAlive}
-                  options={[
-                    { value: true, label: "Hidup" },
-                    { value: false, label: "Meninggal" },
-                  ]}
-                  onChange={(v) => setForm({ ...form, isAlive: v })}
+                  options={employees}
+                  value={form.employeeId}
+                  onChange={(v) => setForm({ ...form, employeeId: v })}
                 />
               </div>
 
               <div>
-                <Label>Foto Pasangan</Label>
+                <Label>Wali (Opsional)</Label>
+                <Select
+                  size="large"
+                  options={wali}
+                  value={form.waliId}
+                  onChange={(v) => setForm({ ...form, waliId: v })}
+                />
+              </div>
+
+              <div>
+                <Label>Anak (Opsional)</Label>
+                <Select
+                  size="large"
+                  options={childrens}
+                  value={form.childrenId}
+                  onChange={(v) => setForm({ ...form, childrenId: v })}
+                />
+              </div>
+
+              <div>
+                <Label>Foto UMKM</Label>
                 <FileInput onChange={handleSelectFile} />
                 {previewPict && (
                   <Image

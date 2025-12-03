@@ -14,9 +14,9 @@ import React from "react";
 export default function FamiliyTables() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Keluarga Asuh" />
+      <PageBreadcrumb pageTitle="Keluarga Asuh"/>
       <div className="space-y-6">
-        <ComponentCard title="Keluarga Asuh">
+        <ComponentCard title="Keluarga Asuh" createName="+" createUrl="/family/create">
           <FamilyTable />
         </ComponentCard>
       </div>

@@ -1,15 +1,16 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import WaliTable from "@/components/view/wali/WaliTable";
+import UmkmTable from "@/components/view/umkm/UmkmTable";
 import React from "react";
 
-export default function WaliTables() {
+
+export default function UmkmTables() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Wali" />
+      <PageBreadcrumb pageTitle="UMKM" />
       <div className="space-y-6">
-        <ComponentCard title="Wali" createName="+" createUrl="/wali/create">
-          <WaliTable />
+        <ComponentCard title="UMKM" createName="+" createUrl="/umkm/create">
+          <UmkmTable />
         </ComponentCard>
       </div>
     </div>

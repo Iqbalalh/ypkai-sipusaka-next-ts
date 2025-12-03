@@ -165,7 +165,7 @@ export default function UpdateEmployee() {
     const loadInitialData = async () => {
       try {
         // 1. Fetch Regions
-        const regRes = await fetchWithAuth(API_REGIONS);
+        const regRes = await fetchWithAuth(API_REGIONS+"/list");
         const regData = camelcaseKeys((await regRes.json()).data, {
           deep: true,
         });

@@ -1,10 +1,10 @@
 export interface Umkm {
   id: number;
-  partnerId: number;
+  partnerId: number | null;
   ownerName: string;
   businessName: string;
   businessAddress: string | null;
-  regionId: number;
+  regionId: number | null;
   subdistrictId: number | null;
   postalCode: string | null;
   umkmCoordinate: string | null;
@@ -15,6 +15,7 @@ export interface Umkm {
   updatedAt: string;
   waliId: number | null;
   childrenId: number | null;
+  umkm_pict?: string | null;
 
   // Non-native Field
   regionName?: string | null;

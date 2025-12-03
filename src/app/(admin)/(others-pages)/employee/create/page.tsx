@@ -170,7 +170,7 @@ export default function CreateEmployee() {
   // ==============================================
   useEffect(() => {
     const loadRegions = async () => {
-      const regRes = await fetchWithAuth(API_REGIONS);
+      const regRes = await fetchWithAuth(API_REGIONS+"/list");
       const regionData = camelcaseKeys((await regRes.json()).data, {
         deep: true,
       });

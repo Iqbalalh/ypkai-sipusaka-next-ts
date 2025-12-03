@@ -4,7 +4,7 @@ import PartnerTable from "@/components/view/partner/PartnerTable";
 import React from "react";
 
 
-export default function FamiliyTables() {
+export default function PartnerTables() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Pasangan" />

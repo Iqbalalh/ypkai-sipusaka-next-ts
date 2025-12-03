@@ -5,34 +5,36 @@ import Button from "@/components/ui/button/Button";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { API_PARTNERS } from "@/lib/apiEndpoint";
+import { API_UMKM } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import camelcaseKeys from "camelcase-keys";
 import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
-import { Partner } from "@/types/partner";
+import { Umkm } from "@/types/umkm";
 
-export default function PartnerInfoCard() {
+export default function UmkmInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [data, setData] = useState<Partner | null>(null);
+  const [data, setData] = useState<Umkm | null>(null);
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPartner = async () => {
+    const fetchUmkm = async () => {
       try {
         if (!id) return;
-        const res = await fetchWithAuth(`${API_PARTNERS}/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch partner details");
-        const partner: ApiResponseSingle<Partner> = await res.json();
-        const partnerData = camelcaseKeys(partner.data, { deep: true }) as Partner;
-        setData(partnerData);
+        const res = await fetchWithAuth(`${API_UMKM}/${id}`);
+        if (!res.ok) throw new Error("Failed to fetch UMKM details");
+
+        const umkm: ApiResponseSingle<Umkm> = await res.json();
+
+        const umkmData = camelcaseKeys(umkm.data, { deep: true }) as Umkm;
+        setData(umkmData);
       } catch (error) {
-        console.error("Error fetching partner details:", error);
+        console.error("Error fetching UMKM details:", error);
         messageApi.error({
-          content: "Gagal mengambil data pasangan.",
+          content: "Gagal mengambil data UMKM.",
           key: "save",
           duration: 2,
         });
@@ -41,7 +43,7 @@ export default function PartnerInfoCard() {
       }
     };
 
-    fetchPartner();
+    fetchUmkm();
   }, [id, messageApi]);
 
   if (loading) {
@@ -55,28 +57,28 @@ export default function PartnerInfoCard() {
   return (
     <>
       {contextHolder}
-      {/* Partner */}
+
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
-        <div>{data?.isUmkm ? <Badge color="info">UMKM</Badge> : ""}</div>
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
+            
             <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
               <Image
                 width={80}
                 height={80}
-                src={data?.partnerPict || "/images/user/alt-user.png"}
-                alt={"Profile"}
+                src={data?.pi || "/images/user/alt-user.png"}
+                alt="Logo UMKM"
               />
             </div>
 
             <div>
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                {data?.isAlive == false ? "Alm. " : ""}
-                {data?.partnerName}
+                {data?.businessName}
               </h4>
+
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-md text-gray-500 dark:text-gray-400">
-                  {data?.partnerJob || "Tidak Bekerja"}
+                  {data?.businessType || "Jenis Usaha Tidak Tersedia"}
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -88,34 +90,37 @@ export default function PartnerInfoCard() {
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-              <Link href={`/partner/edit/${data?.id}`}>
+              <Link href={`/umkm/edit/${data?.id}`}>
                 <Button variant="outline">Edit</Button>
               </Link>
             </div>
           </div>
         </div>
 
-        {/* ====== Detail Info ====== */}
+        {/* ============ Detail UMKM ============ */}
         <div className="mt-6">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-            <InfoItem label="Alamat" value={data?.address || ""} />
-            <InfoItem label="NIK" value={data?.partnerNik || "-"} />
+
+            <InfoItem label="Nama Usaha" value={data?.businessName || "-"} />
+            <InfoItem label="Nama Pemilik" value={data?.ownerName || "-"} />
+            <InfoItem label="NIB" value={data?.nib || "-"} />
+            <InfoItem label="Jenis Usaha" value={data?.businessType || "-"} />
+
+            <InfoItem 
+              label="Alamat" 
+              value={data?.address || "-"} 
+            />
+
+            {/* Link ke WA */}
             <InfoItem
               label="Nomor Telp"
               value={
                 data?.phoneNumber ? (
                   <a
-                    href={`https://wa.me/${
-                      data?.phoneNumber
-                        ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
-                        ?.replace(/^0/, "") // hapus 0 di depan
-                        ?.replace(/\D/g, "") // hapus karakter non-angka
-                        ? `62${data.phoneNumber
-                            .replace(/^\+?62/, "")
-                            .replace(/^0/, "")
-                            .replace(/\D/g, "")}`
-                        : ""
-                    }`}
+                    href={`https://wa.me/${data.phoneNumber
+                      .replace(/^\+?62/, "")
+                      .replace(/^0/, "")
+                      .replace(/\D/g, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
@@ -127,41 +132,29 @@ export default function PartnerInfoCard() {
                 )
               }
             />
+
+            {/* Maps link */}
             <InfoItem
-              label="Nomor Telp Alt"
-              value={data?.phoneNumberAlt || "-"}
-            />
-            <InfoItem
-              label="Status Aktif"
-              value={data?.isActive ? "Aktif" : "Tidak Aktif"}
-            />
-            <InfoItem
-              label="Status Hidup"
-              value={data?.isAlive ? "Hidup" : "Meninggal"}
-            />
-            <InfoItem
-              label="Wilayah"
-              value={data?.regionName?.toString() || "-"}
-            />
-            <InfoItem
-              label="Kecamatan"
-              value={data?.subdistrictId?.toString() || "-"}
-            />
-            <InfoItem
-              label="Koordinat Rumah"
+              label="Koordinat Lokasi"
               value={
                 <a
                   href={`https://www.google.com/maps?q=${encodeURIComponent(
-                    String(data?.homeCoordinate || "-")
+                    String(data?.locationCoordinate || "-")
                   )}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-blue-600 hover:underline"
                 >
-                  {data?.homeCoordinate || "-"}
+                  {data?.locationCoordinate || "-"}
                 </a>
               }
             />
+
+            <InfoItem
+              label="Wilayah ID"
+              value={data?.regionId?.toString() || "-"}
+            />
+
             <InfoItem
               label="Dibuat Pada"
               value={
@@ -170,6 +163,7 @@ export default function PartnerInfoCard() {
                   : "-"
               }
             />
+
             <InfoItem
               label="Diperbarui Pada"
               value={
@@ -178,7 +172,8 @@ export default function PartnerInfoCard() {
                   : "-"
               }
             />
-            <InfoItem label="Catatan" value={data?.partnerJob || "-"} />
+
+            <InfoItem label="Catatan" value={data?.notes || "-"} />
           </div>
         </div>
       </div>

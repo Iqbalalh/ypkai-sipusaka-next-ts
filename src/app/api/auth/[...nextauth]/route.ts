@@ -25,28 +25,30 @@ const authOptions: NextAuthOptions = {
         if (!credentials?.username || !credentials?.password) return null;
 
         try {
-            const res = await fetch(API_AUTH_LOGIN, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    username: credentials.username,
-                    password: credentials.password,
-                }),
-            });
-    
-            const data: LoginResponse = await res.json();
-    
-            if (!res.ok) {
-                // Catat error di server log (opsional)
-                console.error("Authentication failed:", data.message || "Invalid credentials");
-                return null; 
-            }
-            
-            return { ...data.user, token: data.token };
+          const res = await fetch(API_AUTH_LOGIN, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: credentials.username,
+              password: credentials.password,
+            }),
+          });
 
-        } catch (error) {
-            console.error("Network or Fetch Error during login:", error);
+          const data: LoginResponse = await res.json();
+
+          if (!res.ok) {
+            // Catat error di server log (opsional)
+            console.error(
+              "Authentication failed:",
+              data.message || "Invalid credentials"
+            );
             return null;
+          }
+
+          return { ...data.user, token: data.token };
+        } catch (error) {
+          console.error("Network or Fetch Error during login:", error);
+          return null;
         }
       },
     }),
@@ -56,16 +58,23 @@ const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.accessToken = (user as any).token;
+      if (user) {
+        token.accessToken = (user as any).token;
+        token.id = (user as any).id;
+        token.username = (user as any).username;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).token = token.accessToken;
+        (session.user as any).id = token.id;
+        (session.user as any).username = token.username;
       }
       return session;
     },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
 };
 
