@@ -152,7 +152,7 @@ export default function CreateEmployee() {
         key: "save",
         duration: 2,
       });
-      router.back();
+      router.push("/employee");
     } catch (error) {
       console.error(error);
       messageApi.error({

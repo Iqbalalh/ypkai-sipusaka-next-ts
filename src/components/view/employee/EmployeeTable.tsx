@@ -34,7 +34,11 @@ import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
 import { Employee } from "@/types/employee";
 
-export default function EmployeeTable() {
+export default function EmployeeTable({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [data, setData] = useState<Employee[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +57,7 @@ export default function EmployeeTable() {
           deep: true,
         }) as Employee[];
         setData(employees);
+        onCountChange?.(employees.length);
       } catch (error) {
         console.error("Error fetching employees:", error);
         messageApi.error({
@@ -66,12 +71,12 @@ export default function EmployeeTable() {
     };
 
     fetchEmployees();
-  }, [messageApi]);
+  }, [messageApi, onCountChange]);
 
   useEffect(() => {
     const fetchRegions = async () => {
       try {
-        const res = await fetchWithAuth(`${API_REGIONS}`+"/list");
+        const res = await fetchWithAuth(`${API_REGIONS}` + "/list");
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
         const regionsData = camelcaseKeys(json.data, {
@@ -247,17 +252,17 @@ export default function EmployeeTable() {
         gender === "M" ? "Laki-laki" : "Perempuan",
     },
     {
-      title: "Kecelakaan",
+      title: "PLH/Non-PLH",
       dataIndex: "isAccident",
       key: "isAccident",
       filters: [
-        { text: "Ya", value: true },
-        { text: "Tidak", value: false },
+        { text: "PLH", value: true },
+        { text: "Non-PLH", value: false },
       ],
       onFilter: (value, record) => record.isAccident === value,
       render: (isAccident: boolean) => (
         <Badge size="sm" color={isAccident ? "error" : "success"}>
-          {isAccident ? "Ya" : "Tidak"}
+          {isAccident ? "PLH" : "Non-PLH"}
         </Badge>
       ),
     },
@@ -332,6 +337,9 @@ export default function EmployeeTable() {
           pagination={{ pageSize: 50, showSizeChanger: false }}
           bordered
           scroll={{ x: "max-content", y: 500 }}
+          onChange={(pagination, filters, sorter, extra) => {
+            onCountChange?.(extra.currentDataSource.length);
+          }}
         />
       </div>
     </div>

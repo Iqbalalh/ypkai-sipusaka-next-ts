@@ -20,7 +20,11 @@ import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
 import { Umkm } from "@/types/umkm";
 
-export default function UmkmTable() {
+export default function UmkmTable({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [data, setData] = useState<Umkm[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +41,7 @@ export default function UmkmTable() {
         const json: ApiResponseList<Umkm> = await res.json();
         const items = camelcaseKeys(json.data, { deep: true }) as Umkm[];
         setData(items);
+        onCountChange?.(items.length);
       } catch (error) {
         console.error("Error fetching UMKM:", error);
       } finally {
@@ -45,13 +50,13 @@ export default function UmkmTable() {
     };
 
     fetchUmkm();
-  }, []);
+  }, [onCountChange]);
 
   // Fetch Region
   useEffect(() => {
     const fetchRegions = async () => {
       try {
-        const res = await fetchWithAuth(API_REGIONS+"/list");
+        const res = await fetchWithAuth(API_REGIONS + "/list");
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
         const items = camelcaseKeys(json.data, { deep: true }) as Region[];
@@ -283,6 +288,9 @@ export default function UmkmTable() {
         pagination={{ pageSize: 50, showSizeChanger: false }}
         bordered
         scroll={{ x: "max-content", y: 500 }}
+        onChange={(pagination, filters, sorter, extra) => {
+          onCountChange?.(extra.currentDataSource.length);
+        }}
       />
     </div>
   );

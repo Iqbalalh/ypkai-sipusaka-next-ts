@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -34,7 +35,11 @@ import Button from "@/components/ui/button/Button";
 
 import { Children } from "@/types/children";
 
-export default function ChildrenTable() {
+export default function ChildrenTable({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [data, setData] = useState<Children[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -52,6 +57,7 @@ export default function ChildrenTable() {
           deep: true,
         }) as Children[];
         setData(children);
+        onCountChange?.(children.length);
       } catch (error) {
         console.error("Error fetching children:", error);
         messageApi.error({
@@ -65,20 +71,19 @@ export default function ChildrenTable() {
     };
 
     fetchChildren();
-  }, [messageApi]);
+  }, [messageApi, onCountChange]);
 
   // =====================
   // SEARCH CONFIG
   // =====================
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getColumnSearchProps = (dataIndex: keyof Children): any => ({
+  const getColumnSearchProps = (dataIndex: string): any => ({
     filterDropdown: ({
       setSelectedKeys,
       selectedKeys,
       confirm,
       clearFilters,
     }: {
-      setSelectedKeys: (selectedKeys: React.Key[]) => void;
+      setSelectedKeys: (keys: React.Key[]) => void;
       selectedKeys: React.Key[];
       confirm: () => void;
       clearFilters: () => void;
@@ -110,18 +115,30 @@ export default function ChildrenTable() {
         </Space>
       </div>
     ),
+
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
     ),
+
     onFilter: (value: string | number | boolean, record: Children) => {
-      const field = record[dataIndex];
+      // Kolom "orangtua"
+      if (dataIndex === "orangtua") {
+        const combined = `${record.employeeName ?? ""} ${
+          record.partnerName ?? ""
+        }`.toLowerCase();
+        return combined.includes(String(value).toLowerCase());
+      }
+
+      const field = (record as any)[dataIndex];
       return field
         ? String(field).toLowerCase().includes(String(value).toLowerCase())
         : false;
     },
+
     onOpenChange: (visible: boolean) => {
       if (visible) setTimeout(() => searchInput.current?.select(), 100);
     },
+
     render: (text: string) =>
       searchedColumn === dataIndex ? (
         <Highlighter
@@ -138,11 +155,11 @@ export default function ChildrenTable() {
   const handleSearch = (
     selectedKeys: React.Key[],
     confirm: () => void,
-    dataIndex: keyof Children
+    dataIndex: string
   ) => {
     confirm();
     setSearchText(String(selectedKeys[0]));
-    setSearchedColumn(String(dataIndex));
+    setSearchedColumn(dataIndex);
   };
 
   const handleReset = (clearFilters: () => void) => {
@@ -165,6 +182,7 @@ export default function ChildrenTable() {
       title: "Foto",
       dataIndex: "childrenPict",
       key: "childrenPict",
+      width: 80,
       render: (_, child) =>
         child.childrenPict ? (
           <Image
@@ -184,7 +202,6 @@ export default function ChildrenTable() {
             />
           </div>
         ),
-      width: 80,
     },
     {
       title: "Nama Anak",
@@ -192,35 +209,106 @@ export default function ChildrenTable() {
       key: "childrenName",
       ...getColumnSearchProps("childrenName"),
     },
+
+    // ==========================
+    // ORANGTUA (employee - partner)
+    // ==========================
     {
-      title: "Home",
-      dataIndex: "homeId",
-      key: "homeId",
-      width: 80,
-      sorter: (a, b) => (a.homeId ?? 0) - (b.homeId ?? 0),
+      title: "Orangtua",
+      key: "orangtua",
+      dataIndex: "orangtua",
+      width: 200,
+
+      ...getColumnSearchProps("orangtua"),
+
+      sorter: (a, b) => {
+        const x = `${a.employeeName ?? ""} ${
+          a.partnerName ?? ""
+        }`.toLowerCase();
+        const y = `${b.employeeName ?? ""} ${
+          b.partnerName ?? ""
+        }`.toLowerCase();
+        return x.localeCompare(y);
+      },
+
+      render: (_, row) => {
+        const text = `${row.employeeName ?? "-"} - ${row.partnerName ?? "-"}`;
+
+        return searchedColumn === "orangtua" ? (
+          <Highlighter
+            highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
+            searchWords={[searchText]}
+            autoEscape
+            textToHighlight={text}
+          />
+        ) : (
+          text
+        );
+      },
     },
+
+    // ==========================
+    // Yatim / Piatu
+    // ==========================
     {
-      title: "Yatim",
-      dataIndex: "isFatherAlive",
-      key: "isFatherAlive",
-      width: 120,
-      render: (v) => (
-        <Badge size="sm" color={v ? "success" : "error"}>
-          {v ? "Tidak" : "Ya"}
-        </Badge>
-      ),
+      title: "Yatim/Piatu",
+      key: "yatimStatus",
+      width: 150,
+
+      filters: [
+        { text: "Yatim", value: "yatim" },
+        { text: "Piatu", value: "piatu" },
+        { text: "Yatim Piatu", value: "yatim-piatu" },
+      ],
+
+      onFilter: (value, record) => {
+        const father = record.isFatherAlive;
+        const mother = record.isMotherAlive;
+
+        if (!father && mother && value === "yatim") return true;
+        if (father && !mother && value === "piatu") return true;
+        if (!father && !mother && value === "yatim-piatu") return true;
+
+        return false;
+      },
+
+      render: (_, record) => {
+        const father = record.isFatherAlive;
+        const mother = record.isMotherAlive;
+
+        let label = "";
+        let color: "success" | "error" | "warning" | "info" = "success";
+
+        if (!father && mother) {
+          label = "Yatim";
+          color = "warning";
+        } else if (father && !mother) {
+          label = "Piatu";
+          color = "warning";
+        } else if (!father && !mother) {
+          label = "Yatim Piatu";
+          color = "error";
+        } else {
+          label = "Tidak";
+          color = "success";
+        }
+
+        return (
+          <Badge size="sm" color={color}>
+            {label}
+          </Badge>
+        );
+      },
     },
+
     {
-      title: "Piatu",
-      dataIndex: "isMotherAlive",
-      key: "isMotherAlive",
-      width: 120,
-      render: (v) => (
-        <Badge size="sm" color={v ? "success" : "error"}>
-          {v ? "Tidak" : "Ya"}
-        </Badge>
-      ),
+      title: "Nama Wali",
+      dataIndex: "waliName",
+      key: "waliName",
+      ...getColumnSearchProps("waliName"),
+      render: (_, record) => (record.waliName ? record.waliName : "-"),
     },
+
     {
       title: "Jenis Kelamin",
       dataIndex: "childrenGender",
@@ -233,8 +321,9 @@ export default function ChildrenTable() {
       onFilter: (value, record) => record.childrenGender === value,
       render: (g) => (g === "M" ? "Laki-laki" : "Perempuan"),
     },
+
     {
-      title: "ABK",
+      title: "Kondisi",
       dataIndex: "isCondition",
       key: "isCondition",
       width: 100,
@@ -249,6 +338,7 @@ export default function ChildrenTable() {
         </Badge>
       ),
     },
+
     {
       title: "Aksi",
       key: "actions",
@@ -274,9 +364,7 @@ export default function ChildrenTable() {
     },
   ];
 
-  // ======================
   // LOADING
-  // ======================
   if (loading)
     return (
       <div className="flex justify-center items-center gap-4 h-40 text-gray-500">
@@ -298,6 +386,9 @@ export default function ChildrenTable() {
           bordered
           pagination={{ pageSize: 50, showSizeChanger: false }}
           scroll={{ x: "max-content", y: 500 }}
+          onChange={(pagination, filters, sorter, extra) => {
+            onCountChange?.(extra.currentDataSource.length);
+          }}
         />
       </div>
     </div>

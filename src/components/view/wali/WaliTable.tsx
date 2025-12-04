@@ -19,7 +19,11 @@ import Link from "next/link";
 import { ApiResponseList } from "@/types/api-response";
 import { Wali } from "@/types/wali";
 
-export default function WaliTable() {
+export default function WaliTable({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [data, setData] = useState<Wali[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -35,6 +39,7 @@ export default function WaliTable() {
         const json: ApiResponseList<Wali> = await res.json();
         const waliData = camelcaseKeys(json.data, { deep: true }) as Wali[];
         setData(waliData);
+        onCountChange?.(waliData.length);
       } catch (error) {
         console.error("Error fetching wali:", error);
       } finally {
@@ -43,7 +48,7 @@ export default function WaliTable() {
     };
 
     fetchWalis();
-  }, []);
+  }, [onCountChange]);
 
   // 🔍 Fungsi Pencarian Kolom
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -269,6 +274,9 @@ export default function WaliTable() {
         pagination={{ pageSize: 50, showSizeChanger: false }}
         bordered
         scroll={{ x: "max-content", y: 500 }}
+        onChange={(pagination, filters, sorter, extra) => {
+          onCountChange?.(extra.currentDataSource.length);
+        }}
       />
     </div>
   );

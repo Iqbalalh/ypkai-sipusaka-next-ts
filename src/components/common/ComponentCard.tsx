@@ -4,13 +4,14 @@ import React, { useState } from "react";
 import Button from "../ui/button/Button";
 
 interface ComponentCardProps {
-  title: string;
+  title?: string;
   children?: React.ReactNode;
   className?: string;
   createName?: string;
   createUrl?: string;
   desc?: string;
   rightComponent?: React.ReactNode;
+  count?: number
 }
 
 const ComponentCard: React.FC<ComponentCardProps> = ({
@@ -21,6 +22,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   className = "",
   desc = "",
   rightComponent,
+  count
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -32,7 +34,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
       <div className="px-6 py-5">
         <div className="flex justify-between items-center gap-4">
           <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
-            {title}
+            {title}: {count}
           </h3>
 
           <div className="flex items-center gap-3">

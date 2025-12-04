@@ -20,4 +20,7 @@ export interface Children {
 
   // Non-native
   childrenPictFile?: File | null;
+  employeeName?: string | null;
+  partnerName?: string | null;
+  waliName?: string | null;
 }

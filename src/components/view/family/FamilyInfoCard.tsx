@@ -114,7 +114,7 @@ export default function FamilyInfoCard() {
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  <Badge>PLH</Badge>
+                  <Badge>{data?.employeeIsAccident ? "PLH" : "Non-PLH"}</Badge>
                 </p>
               </div>
             </div>
@@ -142,7 +142,7 @@ export default function FamilyInfoCard() {
               label="Posisi Terakhir"
               value={data?.employeeLastPosition || "-"}
             />
-            <InfoItem label="Catatan" value={data?.partnerJob || "-"} />
+            <InfoItem label="Catatan" value={data?.employeeNotes || "-"} />
             {/* <InfoItem
               label="Wilayah"
               value={data?.employeeRegionName?.toString() || "-"}
@@ -297,119 +297,8 @@ export default function FamilyInfoCard() {
         </div>
       </div>
 
-      {/* Children List */}
-      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-6">
-        <h4 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-4">
-          Anak Tertanggung ({data?.childrenData?.length || 0})
-        </h4>
-        {data?.childrenData && data.childrenData.length > 0 ? (
-          data.childrenData.map((child, index) => (
-            <div
-              key={child.id || index}
-              className={`border-t border-gray-200 dark:border-gray-700 py-4 ${
-                index > 0 ? "mt-2" : ""
-              }`}
-            >
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
-                  <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-                    <Image
-                      width={80}
-                      height={80}
-                      src={child.childrenPict || "/images/user/alt-user.png"}
-                      alt={`Profile ${child.childrenName}`}
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex">
-                      <h5 className="text-lg flex font-semibold text-gray-800 dark:text-white/90 mb-3">
-                        {child.childrenName}
-                      </h5>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
-                      <p className="text-md text-gray-500 dark:text-gray-400">
-                        {child.childrenGender === "M"
-                          ? "Laki-laki"
-                          : child.childrenGender === "F"
-                          ? "Perempuan"
-                          : "-"}
-                      </p>
-                      <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        <Badge color={child.isActive ? "success" : "error"}>
-                          {child.isActive ? "Aktif" : "Tidak Aktif"}
-                        </Badge>
-                      </p>
-
-                      {!child.isCondition ? (
-                        <>
-                          <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
-                          <Badge size="sm" color="warning">
-                            ABK
-                          </Badge>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                    <Button variant="outline">Edit</Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* ====== Detail Info Anak ====== */}
-              <div className="mt-2">
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-                  <InfoItem
-                    label="Tanggal Lahir"
-                    value={child?.childrenBirthdate || "-"}
-                  />
-                  <InfoItem
-                    label="Alamat"
-                    value={child?.childrenAddress || "-"}
-                  />
-                  <InfoItem
-                    label="Nomor Telp"
-                    value={child?.childrenPhone || "-"}
-                  />
-                  <InfoItem
-                    label="Anak Ke"
-                    value={child?.index?.toString() || "-"}
-                  />
-                  <InfoItem
-                    label="Dibuat Pada"
-                    value={
-                      child?.createdAt
-                        ? new Date(child.createdAt).toLocaleString()
-                        : "-"
-                    }
-                  />
-                  <InfoItem
-                    label="Diperbarui Pada"
-                    value={
-                      child?.updatedAt
-                        ? new Date(child.updatedAt).toLocaleString()
-                        : "-"
-                    }
-                  />
-
-                  <InfoItem label="Catatan" value={child?.notes || "-"} />
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400">
-            Tidak ada data anak yang tercatat.
-          </p>
-        )}
-      </div>
-
       {/* Wali */}
-      {data?.waliId ? (
+      {data?.waliId && (
         <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-6">
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
             Wali
@@ -480,11 +369,120 @@ export default function FamilyInfoCard() {
             </div>
           </>
         </div>
-      ) : (
-        <p className="text-gray-500 dark:text-gray-400">
-          Tidak ada data wali yang tercatat.
-        </p>
       )}
+
+      {/* Children List */}
+      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-6">
+        <h4 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-4">
+          Anak Tertanggung ({data?.childrenData?.length || 0})
+        </h4>
+        {data?.childrenData && data.childrenData.length > 0 ? (
+          data.childrenData.map((child, index) => (
+            <div
+              key={child.id || index}
+              className={`border-t border-gray-200 dark:border-gray-700 py-4 ${
+                index > 0 ? "mt-2" : ""
+              }`}
+            >
+              <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
+                  <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
+                    <Image
+                      width={80}
+                      height={80}
+                      src={child.childrenPict || "/images/user/alt-user.png"}
+                      alt={`Profile ${child.childrenName}`}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex">
+                      <h5 className="text-lg flex font-semibold text-gray-800 dark:text-white/90 mb-3">
+                        {child.childrenName}
+                      </h5>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
+                      <p className="text-md text-gray-500 dark:text-gray-400">
+                        {child.childrenGender === "M"
+                          ? "Laki-laki"
+                          : child.childrenGender === "F"
+                          ? "Perempuan"
+                          : "-"}
+                      </p>
+                      <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <Badge color={child.isActive ? "success" : "error"}>
+                          {child.isActive ? "Aktif" : "Tidak Aktif"}
+                        </Badge>
+                      </p>
+
+                      {!child.isCondition ? (
+                        <>
+                          <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
+                          <Badge size="sm" color="warning">
+                            ABK
+                          </Badge>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
+                    <Link href={`/children/edit/${child.id}`}>
+                      <Button variant="outline">Edit</Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* ====== Detail Info Anak ====== */}
+              <div className="mt-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+                  <InfoItem
+                    label="Tanggal Lahir"
+                    value={child?.childrenBirthdate || "-"}
+                  />
+                  <InfoItem
+                    label="Alamat"
+                    value={child?.childrenAddress || "-"}
+                  />
+                  <InfoItem
+                    label="Nomor Telp"
+                    value={child?.childrenPhone || "-"}
+                  />
+                  <InfoItem
+                    label="Anak Ke"
+                    value={child?.index?.toString() || "-"}
+                  />
+                  <InfoItem
+                    label="Dibuat Pada"
+                    value={
+                      child?.createdAt
+                        ? new Date(child.createdAt).toLocaleString()
+                        : "-"
+                    }
+                  />
+                  <InfoItem
+                    label="Diperbarui Pada"
+                    value={
+                      child?.updatedAt
+                        ? new Date(child.updatedAt).toLocaleString()
+                        : "-"
+                    }
+                  />
+
+                  <InfoItem label="Catatan" value={child?.notes || "-"} />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500 dark:text-gray-400">
+            Tidak ada data anak yang tercatat.
+          </p>
+        )}
+      </div>
     </>
   );
 }

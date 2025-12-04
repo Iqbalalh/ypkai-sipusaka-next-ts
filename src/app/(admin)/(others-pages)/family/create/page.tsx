@@ -43,7 +43,7 @@ export default function CreateHome() {
   useEffect(() => {
     const loadData = async () => {
       const [regRes, empRes, subdRes] = await Promise.all([
-        fetchWithAuth(API_REGIONS+"/list"),
+        fetchWithAuth(API_REGIONS + "/list"),
         fetchWithAuth(`${API_EMPLOYEES}/list`),
         fetchWithAuth(`${API_SUBDISTRICTS}/list`),
       ]);
@@ -265,7 +265,7 @@ export default function CreateHome() {
         duration: 2,
       });
 
-      router.back();
+      router.push("/family");
     } catch (err) {
       console.error(err);
       messageApi.error({

@@ -30,7 +30,11 @@ import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
 import { HomeTable } from "@/types/home";
 
-export default function FamilyTable() {
+export default function FamilyTable({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState<HomeTable[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
@@ -47,6 +51,7 @@ export default function FamilyTable() {
         const json: ApiResponseList<HomeTable> = await res.json();
         const homes = camelcaseKeys(json.data, { deep: true }) as HomeTable[];
         setData(homes);
+        onCountChange?.(homes.length);
       } catch (error) {
         console.error("Error fetching homes:", error);
         messageApi.error({
@@ -60,12 +65,12 @@ export default function FamilyTable() {
     };
 
     fetchHomes();
-  }, [messageApi]);
+  }, [messageApi, onCountChange]);
 
   useEffect(() => {
     const fetchRegions = async () => {
       try {
-        const res = await fetchWithAuth(`${API_REGIONS}`+"/list");
+        const res = await fetchWithAuth(`${API_REGIONS}` + "/list");
         if (!res.ok) throw new Error("Failed to fetch regions");
         const json: ApiResponseList<Region> = await res.json();
         const regionsData = camelcaseKeys(json.data, {
@@ -330,6 +335,9 @@ export default function FamilyTable() {
           pagination={{ pageSize: 50, showSizeChanger: false }}
           bordered
           scroll={{ x: "max-content", y: 500 }}
+          onChange={(pagination, filters, sorter, extra) => {
+            onCountChange?.(extra.currentDataSource.length);
+          }}
         />
       </div>
     </div>

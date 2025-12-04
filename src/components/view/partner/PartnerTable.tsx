@@ -21,7 +21,11 @@ import { ApiResponseList } from "@/types/api-response";
 import { Partner } from "@/types/partner";
 import Badge from "@/components/ui/badge/Badge";
 
-export default function PartnerTable() {
+export default function PartnerTable({
+  onCountChange,
+}: {
+  onCountChange?: (count: number) => void;
+}) {
   const [data, setData] = useState<Partner[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +42,7 @@ export default function PartnerTable() {
         const json: ApiResponseList<Partner> = await res.json();
         const partners = camelcaseKeys(json.data, { deep: true }) as Partner[];
         setData(partners);
+        onCountChange?.(partners.length);
       } catch (error) {
         console.error("Error fetching partners:", error);
       } finally {
@@ -46,7 +51,7 @@ export default function PartnerTable() {
     };
 
     fetchPartners();
-  }, []);
+  }, [onCountChange]);
 
   // Fetch Region Data
   useEffect(() => {
@@ -359,6 +364,9 @@ export default function PartnerTable() {
           pagination={{ pageSize: 50, showSizeChanger: false }}
           bordered
           scroll={{ x: "max-content", y: 500 }}
+          onChange={(pagination, filters, sorter, extra) => {
+            onCountChange?.(extra.currentDataSource.length);
+          }}
         />
       </div>
     </div>

@@ -156,7 +156,7 @@ export default function CreatePartner() {
         key: "save",
         duration: 2,
       });
-      router.back();
+      router.push("/partner");
     } catch (error) {
       console.error(error);
       messageApi.error({
@@ -173,7 +173,7 @@ export default function CreatePartner() {
   useEffect(() => {
     const loadData = async () => {
       const [regRes, empRes, subdRes] = await Promise.all([
-        fetchWithAuth(API_REGIONS+"/list"),
+        fetchWithAuth(API_REGIONS + "/list"),
         fetchWithAuth(`${API_EMPLOYEES}/list`),
         fetchWithAuth(`${API_SUBDISTRICTS}/list`),
       ]);

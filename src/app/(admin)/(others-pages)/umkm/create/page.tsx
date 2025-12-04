@@ -128,7 +128,7 @@ export default function CreateUmkm() {
       if (!res.ok) throw new Error("Gagal membuat UMKM");
 
       messageApi.success({ content: "UMKM berhasil dibuat!", key: "save" });
-      router.back();
+      router.push("/umkm");
     } catch (err) {
       console.error(err);
       messageApi.error({ content: "Gagal membuat UMKM", key: "save" });
@@ -142,12 +142,12 @@ export default function CreateUmkm() {
     const load = async () => {
       try {
         const [reg, subd, emp, prt, chd, wl] = await Promise.all([
-          fetchWithAuth(API_REGIONS+"/list"),
-          fetchWithAuth(API_SUBDISTRICTS+"/list"),
+          fetchWithAuth(API_REGIONS + "/list"),
+          fetchWithAuth(API_SUBDISTRICTS + "/list"),
           fetchWithAuth(`${API_EMPLOYEES}/list`),
-          fetchWithAuth(`${API_PARTNERS}`+"/list"),
-          fetchWithAuth(`${API_CHILDRENS}`+"/list"),
-          fetchWithAuth(`${API_WALI}`+"/list"),
+          fetchWithAuth(`${API_PARTNERS}` + "/list"),
+          fetchWithAuth(`${API_CHILDRENS}` + "/list"),
+          fetchWithAuth(`${API_WALI}` + "/list"),
         ]);
 
         setRegions(

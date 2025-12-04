@@ -1,6 +1,6 @@
 export interface Subdistricts {
   subdistrictId: number;
   cityId: number;
-  subdistrictName: boolean;
+  subdistrictName: string | null;
   createdAt: string | null;
 }

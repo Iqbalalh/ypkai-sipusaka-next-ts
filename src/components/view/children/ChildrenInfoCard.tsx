@@ -12,6 +12,7 @@ import camelcaseKeys from "camelcase-keys";
 import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import { Children } from "@/types/children";
+import Link from "next/link";
 
 export default function ChildrenInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -103,7 +104,9 @@ export default function ChildrenInfoCard() {
               </div>
 
               <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                <Button variant="outline">Edit</Button>
+                <Link href={`/children/edit/${data?.id}`}>
+                  <Button variant="outline">Edit</Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -117,6 +120,11 @@ export default function ChildrenInfoCard() {
               />
               <InfoItem label="Alamat" value={data?.childrenAddress || "-"} />
               <InfoItem label="Nomor Telp" value={data?.childrenPhone || "-"} />
+              <InfoItem
+                label="Nama Orangtua"
+                value={`${data?.employeeName} - ${data?.partnerName}`}
+              />
+              <InfoItem label="Nama Wali" value={data?.waliName || "-"} />
               <InfoItem
                 label="Anak Ke"
                 value={data?.index?.toString() || "-"}

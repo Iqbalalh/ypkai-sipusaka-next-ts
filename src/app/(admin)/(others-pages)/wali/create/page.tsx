@@ -114,7 +114,7 @@ export default function CreateWali() {
         duration: 2,
       });
 
-      router.back();
+      router.push("/wali");
     } catch (error) {
       console.error(error);
       messageApi.error({
