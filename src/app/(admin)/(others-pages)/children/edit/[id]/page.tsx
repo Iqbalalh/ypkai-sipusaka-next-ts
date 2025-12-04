@@ -384,8 +384,8 @@ export default function UpdateChildren() {
                   className="w-full"
                   value={form.isCondition}
                   options={[
-                    { value: false, label: "Normal" },
-                    { value: true, label: "Khusus" },
+                    { value: true, label: "Normal" },
+                    { value: false, label: "Khusus" },
                   ]}
                   onChange={(v) => setForm({ ...form, isCondition: v })}
                 />

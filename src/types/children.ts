@@ -5,7 +5,7 @@ export interface Children {
   homeId?: number;
   childrenName: string;
   isActive: boolean;
-  childrenBirthdate: string | null;
+  childrenBirthdate?: string | null;
   childrenAddress?: string | null;
   childrenPhone?: string | null;
   notes?: string | null;
@@ -16,7 +16,7 @@ export interface Children {
   childrenPict?: string | null;
   createdAt?: string | null; // Timestamp ISO
   updatedAt?: string | null; // Timestamp ISO
-  index: number | null;
+  index?: number | null;
 
   // Non-native
   childrenPictFile?: File | null;
