@@ -34,7 +34,7 @@ export default function UpdateChildren() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   // ==========================
-  // FORM STATE
+  // FORM STATE (with nullable values)
   // ==========================
   const [form, setForm] = useState({
     employeeId: null,
@@ -42,11 +42,11 @@ export default function UpdateChildren() {
     homeId: null,
 
     childrenName: "",
-    childrenBirthdate: "",
+    childrenBirthdate: null as string | null,
     childrenAddress: "",
     childrenPhone: "",
     notes: "",
-    index: 0,
+    index: null as number | null,
 
     isActive: true,
     isFatherAlive: true,
@@ -100,7 +100,6 @@ export default function UpdateChildren() {
     }
 
     setSubmitLoading(true);
-
     messageApi.loading({
       content: "Menyimpan perubahan...",
       key: "save",
@@ -111,8 +110,10 @@ export default function UpdateChildren() {
       const fd = new FormData();
 
       Object.entries(form).forEach(([key, value]) => {
-        if (value === null || value === undefined) return;
-        fd.append(toSnake(key), String(value));
+        if (value === undefined) return;
+
+        // kirim null sebagai string "null"
+        fd.append(toSnake(key), value === null ? "null" : String(value));
       });
 
       if (photoFile) fd.append("photo", photoFile);
@@ -128,7 +129,6 @@ export default function UpdateChildren() {
         content: "Data anak berhasil diperbarui!",
         key: "save",
       });
-
       router.back();
     } catch (e) {
       console.error(e);
@@ -139,12 +139,12 @@ export default function UpdateChildren() {
   };
 
   // ==========================
-  // FETCH INITIAL: HOMES + CHILDREN
+  // FETCH INITIAL DATA
   // ==========================
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 1. Homes
+        // FETCH homes
         const homeRes = await fetchWithAuth(`${API_HOMES}/list`);
         const homeData = camelcaseKeys((await homeRes.json()).data);
 
@@ -157,7 +157,7 @@ export default function UpdateChildren() {
           }))
         );
 
-        // 2. Children
+        // FETCH children
         const childRes = await fetchWithAuth(`${API_CHILDRENS}/${id}`);
         const childData = camelcaseKeys((await childRes.json()).data, {
           deep: true,
@@ -169,11 +169,11 @@ export default function UpdateChildren() {
           homeId: childData.homeId,
 
           childrenName: childData.childrenName ?? "",
-          childrenBirthdate: childData.childrenBirthdate ?? "",
+          childrenBirthdate: childData.childrenBirthdate ?? null,
           childrenAddress: childData.childrenAddress ?? "",
           childrenPhone: childData.childrenPhone ?? "",
           notes: childData.notes ?? "",
-          index: childData.index ?? "",
+          index: childData.index ?? null,
 
           isActive: childData.isActive === true,
           isFatherAlive: childData.isFatherAlive === true,
@@ -244,7 +244,7 @@ export default function UpdateChildren() {
                   onChange={(d) =>
                     setForm({
                       ...form,
-                      childrenBirthdate: d ? d.format("YYYY-MM-DD") : "",
+                      childrenBirthdate: d ? d.format("YYYY-MM-DD") : null,
                     })
                   }
                 />
@@ -253,8 +253,8 @@ export default function UpdateChildren() {
               <div>
                 <Label>Alamat</Label>
                 <TextArea
-                  size="large"
                   rows={3}
+                  size="large"
                   value={form.childrenAddress ?? ""}
                   onChange={(e) =>
                     setForm({ ...form, childrenAddress: e.target.value })
@@ -281,16 +281,33 @@ export default function UpdateChildren() {
                   type="number"
                   value={form.index ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, index: Number(e.target.value) })
+                    setForm({
+                      ...form,
+                      index: e.target.value ? Number(e.target.value) : null,
+                    })
                   }
+                />
+              </div>
+
+              <div>
+                <Label>Status</Label>
+                <Select
+                  size="large"
+                  className="w-full"
+                  value={form.isActive}
+                  options={[
+                    { value: true, label: "Aktif" },
+                    { value: false, label: "Tidak Aktif" },
+                  ]}
+                  onChange={(v) => setForm({ ...form, isActive: v })}
                 />
               </div>
 
               <div>
                 <Label>Catatan</Label>
                 <TextArea
-                  size="large"
                   rows={3}
+                  size="large"
                   value={form.notes ?? ""}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
@@ -322,8 +339,8 @@ export default function UpdateChildren() {
                   size="large"
                   className="w-full"
                   showSearch
-                  options={homes}
                   value={form.homeId}
+                  options={homes}
                   onChange={(value, option: any) =>
                     setForm({
                       ...form,
@@ -385,7 +402,7 @@ export default function UpdateChildren() {
                   value={form.isCondition}
                   options={[
                     { value: true, label: "Normal" },
-                    { value: false, label: "Khusus" },
+                    { value: false, label: "ABK" },
                   ]}
                   onChange={(v) => setForm({ ...form, isCondition: v })}
                 />
@@ -411,6 +428,7 @@ export default function UpdateChildren() {
               >
                 Kembali
               </Button>
+
               <Button
                 onClick={handleSubmit}
                 disabled={submitLoading}

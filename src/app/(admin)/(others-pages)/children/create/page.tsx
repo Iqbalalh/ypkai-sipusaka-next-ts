@@ -1,62 +1,70 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
+import Button from "@/components/ui/button/Button";
+import { Option } from "@/components/form/Select";
 
 import { Image, Select, Input, message, Flex, Spin, DatePicker } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
 import { API_HOMES, API_CHILDRENS } from "@/lib/apiEndpoint";
-
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
-import { useEffect, useState } from "react";
-import Button from "@/components/ui/button/Button";
-import { Option } from "@/components/form/Select";
-import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 
 const { TextArea } = Input;
 
+// ----------------------------
+// Helpers
+// ----------------------------
+const toSnake = (str: string) =>
+  str.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
+
+const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+// ----------------------------
+// Component
+// ----------------------------
 export default function CreateChildren() {
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
 
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [homes, setHomes] = useState<Option[]>([]);
 
+  const [homes, setHomes] = useState<Option[]>([]);
   const [previewPict, setPreviewPict] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
-  // ---- CHILDREN FORM STATE ----
   const [form, setForm] = useState({
     employeeId: null,
     partnerId: null,
     homeId: null,
-
     childrenName: "",
     childrenBirthdate: "",
     childrenAddress: "",
     childrenPhone: "",
     notes: "",
-
     isActive: true,
     isFatherAlive: true,
     isMotherAlive: true,
     childrenGender: "M",
     isCondition: false,
-
     index: 0,
   });
 
-  // VALIDASI FILE FOTO
+  // ----------------------------
+  // File validation
+  // ----------------------------
   const validateFile = (file: File) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
+    if (!allowedImageTypes.includes(file.type)) {
       messageApi.error("Format foto tidak valid.");
       return false;
     }
@@ -69,27 +77,20 @@ export default function CreateChildren() {
 
   const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (!validateFile(file)) return;
+    if (!file || !validateFile(file)) return;
 
     setPhotoFile(file);
     setPreviewPict(URL.createObjectURL(file));
   };
 
-  // camelCase → snake_case
-  const toSnake = (str: string) =>
-    str.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
-
-  // SUBMIT FORM
+  // ----------------------------
+  // Submit
+  // ----------------------------
   const handleSubmit = async () => {
-    if (!form.childrenName.trim()) {
-      messageApi.error("Nama anak wajib diisi.");
-      return;
-    }
-    if (!form.homeId) {
-      messageApi.error("Keluarga wajib dipilih.");
-      return;
-    }
+    if (!form.childrenName.trim())
+      return messageApi.error("Nama anak wajib diisi.");
+
+    if (!form.homeId) return messageApi.error("Keluarga wajib dipilih.");
 
     setSubmitLoading(true);
     messageApi.loading({
@@ -102,19 +103,9 @@ export default function CreateChildren() {
       const fd = new FormData();
 
       Object.entries(form).forEach(([key, value]) => {
-        if (value === null || value === undefined) return;
-
-        let v = value;
-        if (
-          key === "isActive" ||
-          key === "isFatherAlive" ||
-          key === "isMotherAlive" ||
-          key === "isCondition"
-        ) {
-          v = value ? true : false;
+        if (value !== null && value !== undefined) {
+          fd.append(toSnake(key), String(value));
         }
-
-        fd.append(toSnake(key), String(v));
       });
 
       if (photoFile) fd.append("photo", photoFile);
@@ -124,53 +115,66 @@ export default function CreateChildren() {
         body: fd,
       });
 
-      if (!res.ok) throw new Error("Gagal menyimpan anak");
+      if (!res.ok) throw new Error();
 
       messageApi.success({
         content: "Data anak berhasil dibuat!",
         key: "save",
       });
+
       router.push("/children");
     } catch (err) {
       console.error(err);
-      messageApi.error({ content: "Gagal menyimpan data anak.", key: "save" });
+      messageApi.error({
+        content: "Gagal menyimpan data anak.",
+        key: "save",
+      });
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // FETCH DATA
+  // ----------------------------
+  // Fetch Data (homes)
+  // ----------------------------
   useEffect(() => {
     const loadData = async () => {
-      const [homeRes] = await Promise.all([fetchWithAuth(`${API_HOMES}/list`)]);
+      try {
+        const homeRes = await fetchWithAuth(`${API_HOMES}/list`);
+        const homeData = camelcaseKeys((await homeRes.json()).data);
 
-      const homeData = camelcaseKeys((await homeRes.json()).data);
-
-      setHomes(
-        homeData.map((h: any) => ({
-          value: h.id,
-          label: `${h.employeeName} - ${h.partnerName}`,
-          partnerId: h.partnerId,
-          employeeId: h.employeeId,
-        }))
-      );
-
-      setLoading(false);
+        setHomes(
+          homeData.map((h: any) => ({
+            value: h.id,
+            label: `${h.employeeName} - ${h.partnerName}`,
+            partnerId: h.partnerId,
+            employeeId: h.employeeId,
+          }))
+        );
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
   }, []);
 
+  // ----------------------------
+  // Loading Screen
+  // ----------------------------
   if (loading)
     return (
       <div className="flex gap-2">
         <Flex align="center" gap="middle">
           <Spin indicator={<LoadingOutlined spin />} size="small" />
-        </Flex>{" "}
+        </Flex>
         Loading...
       </div>
     );
 
+  // ----------------------------
+  // JSX
+  // ----------------------------
   return (
     <div>
       {contextHolder}
@@ -181,6 +185,7 @@ export default function CreateChildren() {
         <div className="space-y-6">
           <ComponentCard title="Isi Data Anak">
             <div className="space-y-6">
+              {/* Nama Anak */}
               <div>
                 <Label>Nama Anak *</Label>
                 <Input
@@ -192,6 +197,7 @@ export default function CreateChildren() {
                 />
               </div>
 
+              {/* Tanggal Lahir */}
               <div>
                 <Label>Tanggal Lahir</Label>
                 <DatePicker
@@ -211,46 +217,69 @@ export default function CreateChildren() {
                 />
               </div>
 
+              {/* Alamat */}
               <div>
                 <Label>Alamat</Label>
                 <TextArea
                   size="large"
                   rows={3}
-                  value={form.childrenAddress ?? ""}
+                  value={form.childrenAddress}
                   onChange={(e) =>
                     setForm({ ...form, childrenAddress: e.target.value })
                   }
                 />
               </div>
 
+              {/* Nomor Telepon */}
               <div>
                 <Label>No. Telepon</Label>
                 <Input
                   size="large"
-
-                  value={form.childrenPhone ?? ""}
+                  value={form.childrenPhone}
                   onChange={(e) =>
                     setForm({ ...form, childrenPhone: e.target.value })
                   }
                 />
               </div>
 
+              {/* Anak Ke- */}
               <div>
                 <Label>Anak Ke-</Label>
                 <Input
                   size="large"
                   type="number"
-                  value={form.index ?? ""}
-                  onChange={(e) => setForm({ ...form, index: Number(e.target.value) })}
+                  value={form.index}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      index: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
 
+              {/* Status */}
+              <div>
+                <Label>Status</Label>
+                <Select
+                  size="large"
+                  className="w-full"
+                  value={form.isActive}
+                  options={[
+                    { value: true, label: "Aktif" },
+                    { value: false, label: "Tidak Aktif" },
+                  ]}
+                  onChange={(v) => setForm({ ...form, isActive: v })}
+                />
+              </div>
+
+              {/* Catatan */}
               <div>
                 <Label>Catatan</Label>
                 <TextArea
                   size="large"
-                  value={form.notes ?? ""}
                   rows={3}
+                  value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
@@ -262,6 +291,7 @@ export default function CreateChildren() {
         <div className="space-y-6">
           <ComponentCard title="Data Tambahan">
             <div className="space-y-6">
+              {/* Keluarga */}
               <div>
                 <Label>Keluarga</Label>
                 <Select
@@ -281,6 +311,7 @@ export default function CreateChildren() {
                 />
               </div>
 
+              {/* Gender */}
               <div>
                 <Label>Jenis Kelamin *</Label>
                 <Select
@@ -295,6 +326,7 @@ export default function CreateChildren() {
                 />
               </div>
 
+              {/* Ayah */}
               <div>
                 <Label>Status Ayah *</Label>
                 <Select
@@ -309,6 +341,7 @@ export default function CreateChildren() {
                 />
               </div>
 
+              {/* Ibu */}
               <div>
                 <Label>Status Ibu *</Label>
                 <Select
@@ -323,6 +356,7 @@ export default function CreateChildren() {
                 />
               </div>
 
+              {/* Kondisi */}
               <div>
                 <Label>Kondisi *</Label>
                 <Select
@@ -331,12 +365,13 @@ export default function CreateChildren() {
                   value={form.isCondition}
                   options={[
                     { value: true, label: "Normal" },
-                    { value: false, label: "Khusus" },
+                    { value: false, label: "ABK" },
                   ]}
                   onChange={(v) => setForm({ ...form, isCondition: v })}
                 />
               </div>
 
+              {/* Foto */}
               <div>
                 <Label>Foto Anak</Label>
                 <FileInput onChange={handleSelectFile} />
@@ -350,6 +385,7 @@ export default function CreateChildren() {
               </div>
             </div>
 
+            {/* Buttons */}
             <div className="flex justify-between pt-6">
               <Button
                 className="bg-gray-500 text-white"
