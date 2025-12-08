@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Select, Input, message, Switch, Flex } from "antd";
+import { Select, Input, message, Switch, Flex, DatePicker } from "antd";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
@@ -13,8 +13,10 @@ import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import {
   API_EMPLOYEES,
   API_HOMES,
+  API_PARTNERS,
   API_REGIONS,
   API_SUBDISTRICTS,
+  API_WALI,
 } from "@/lib/apiEndpoint";
 import camelcaseKeys from "camelcase-keys";
 import { Region } from "@/types/region";
@@ -23,29 +25,41 @@ import { useRouter } from "next/navigation";
 import { Children } from "@/types/children";
 import { Subdistricts } from "@/types/subdistrict";
 import { Employee } from "@/types/employee";
+import { Wali } from "@/types/wali";
+import { Partner } from "@/types/partner";
+import dayjs from "dayjs";
 
 export default function CreateHome() {
-  const [home, setHome] = useState({ regionId: null, postalCode: "" });
+  const [home, setHome] = useState({
+    regionId: null,
+    postalCode: "",
+    employeeId: null,
+    partnerId: null,
+    waliId: null,
+  });
   const [messageApi, contextHolder] = message.useMessage();
   const [regions, setRegions] = useState<Option[]>([]);
   const [employees, setEmployees] = useState<Option[]>([]);
   const [subdistricts, setSubdistricts] = useState<Option[]>([]);
+  const [wali, setWali] = useState<Option[]>([]);
+  const [partners, setPartners] = useState<Option[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [employeeMode, setEmployeeMode] = useState("existing");
   const [partnerMode, setPartnerMode] = useState("existing");
   const [waliMode, setWaliMode] = useState("none");
   const router = useRouter();
-  const [children, setChildren] = useState<Children[]>([]);
 
   // ==============================================
-  // FETCH REGIONS
+  // FETCH DATA
   // ==============================================
   useEffect(() => {
     const loadData = async () => {
-      const [regRes, empRes, subdRes] = await Promise.all([
+      const [regRes, empRes, subdRes, walRes, ParRes] = await Promise.all([
         fetchWithAuth(API_REGIONS + "/list"),
         fetchWithAuth(`${API_EMPLOYEES}/list`),
         fetchWithAuth(`${API_SUBDISTRICTS}/list`),
+        fetchWithAuth(`${API_WALI}/list`),
+        fetchWithAuth(`${API_PARTNERS}/list`),
       ]);
 
       const regionData = camelcaseKeys((await regRes.json()).data, {
@@ -55,6 +69,12 @@ export default function CreateHome() {
         deep: true,
       });
       const subdistrictData = camelcaseKeys((await subdRes.json()).data, {
+        deep: true,
+      });
+      const waliData = camelcaseKeys((await walRes.json()).data, {
+        deep: true,
+      });
+      const partnerData = camelcaseKeys((await ParRes.json()).data, {
         deep: true,
       });
 
@@ -76,6 +96,20 @@ export default function CreateHome() {
         subdistrictData.map((e: Subdistricts) => ({
           value: e.subdistrictId,
           label: `${e.subdistrictName}`,
+        }))
+      );
+
+      setWali(
+        waliData.map((e: Wali) => ({
+          value: e.id,
+          label: `${e.waliName}`,
+        }))
+      );
+
+      setPartners(
+        partnerData.map((e: Partner) => ({
+          value: e.id,
+          label: `${e.partnerName}`,
         }))
       );
 
@@ -135,27 +169,35 @@ export default function CreateHome() {
   // SUBMIT
   // ==============================================
   const handleSubmit = async () => {
-    // ------------------------
-    // VALIDASI MINIMAL
-    // ------------------------
-    if (!form.employee.nipNipp) {
-      messageApi.error("NIP/NIPP wajib diisi.");
-      return;
-    }
+    // ===============================
+    // VALIDASI EMPLOYEE
+    // ===============================
+    if (employeeMode === "existing") {
+      if (!form.employeeId) {
+        messageApi.error("Pilih pegawai yang sudah ada.");
+        return;
+      }
+    } else {
+      // employeeMode === "new"
+      if (!form.employee.nipNipp) {
+        messageApi.error("NIP/NIPP wajib diisi.");
+        return;
+      }
 
-    if (!form.employee.employeeName) {
-      messageApi.error("Nama pegawai wajib diisi.");
-      return;
-    }
+      if (!form.employee.employeeName) {
+        messageApi.error("Nama pegawai wajib diisi.");
+        return;
+      }
 
-    if (!form.employee.regionId) {
-      messageApi.error("Wilayah wajib diisi.");
-      return;
-    }
+      if (!form.employee.regionId) {
+        messageApi.error("Wilayah wajib diisi.");
+        return;
+      }
 
-    if (!form.employee.employeeGender) {
-      messageApi.error("Jenis kelamin wajib diisi.");
-      return;
+      if (!form.employee.employeeGender) {
+        messageApi.error("Jenis kelamin wajib diisi.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -185,48 +227,60 @@ export default function CreateHome() {
           return;
         }
       });
+      // ============================
+      // 2. EMPLOYEE
+      // ============================
+      if (employeeMode === "existing") {
+        fd.append("employee_id", String(form.employeeId));
+      } else {
+        // NEW EMPLOYEE
+        Object.entries(form.employee).forEach(([key, value]) => {
+          if (key === "employeePictFile") return;
+          if (value !== null && value !== undefined) {
+            fd.append(`employee_${toSnake(key)}`, String(value));
+          }
+        });
 
-      // ============================
-      // 2. APPEND EMPLOYEE FIELDS
-      // ============================
-      Object.entries(form.employee).forEach(([key, value]) => {
-        if (key === "employeePictFile") return;
-        if (value !== null && value !== undefined) {
-          fd.append(`employee_${toSnake(key)}`, String(value));
+        if (form.employee.employeePictFile) {
+          fd.append("employee_pict", form.employee.employeePictFile);
         }
-      });
-
-      if (form.employee.employeePictFile) {
-        fd.append("employee_pict", form.employee.employeePictFile);
       }
 
       // ============================
       // 3. APPEND PARTNER FIELDS
       // ============================
-      Object.entries(form.partner).forEach(([key, value]) => {
-        if (key === "partnerPictFile") return;
-        if (value !== null && value !== undefined) {
-          fd.append(`partner_${toSnake(key)}`, String(value));
+      if (partnerMode === "existing") {
+        fd.append("partner_id", String(form.partnerId));
+      } else {
+        Object.entries(form.partner).forEach(([key, value]) => {
+          if (key === "partnerPictFile") return;
+          if (value !== null && value !== undefined) {
+            fd.append(`partner_${toSnake(key)}`, String(value));
+          }
+        });
+
+        if (form.partner.partnerPictFile) {
+          fd.append("partner_pict", form.partner.partnerPictFile);
         }
-      });
-
-      if (form.partner.partnerPictFile) {
-        fd.append("partner_pict", form.partner.partnerPictFile);
       }
+      // ============================
+      // 4. WALI
+      // ============================
+      if (waliMode === "existing") {
+        fd.append("wali_id", String(form.waliId));
+      } else if (waliMode === "new") {
+        Object.entries(form.wali).forEach(([key, value]) => {
+          if (key === "waliPictFile") return;
+          if (value !== null && value !== undefined) {
+            fd.append(`wali_${toSnake(key)}`, String(value));
+          }
+        });
 
-      // ============================
-      // 4. APPEND WALI FIELDS
-      // ============================
-      Object.entries(form.wali).forEach(([key, value]) => {
-        if (key === "waliPictFile") return;
-        if (value !== null && value !== undefined) {
-          fd.append(`wali_${toSnake(key)}`, String(value));
+        if (form.wali.waliPictFile) {
+          fd.append("wali_pict", form.wali.waliPictFile);
         }
-      });
-
-      if (form.wali.waliPictFile) {
-        fd.append("wali_pict", form.wali.waliPictFile);
       }
+      // Jika waliMode === "none" → Tidak kirim apapun
 
       // ============================
       // 5. APPEND CHILDRENS[]
@@ -356,50 +410,48 @@ export default function CreateHome() {
     }));
   };
 
-  const updateChild = (i: number, patch: Partial<Children>) => {
-    setChildren((prev) => {
-      const updated = [...prev];
-
-      updated[i] = {
-        ...updated[i],
-        ...patch,
-      };
-
-      return updated;
-    });
+  const updateChild = (index: number, updatedData: Partial<Children>) => {
+    setForm((prev) => ({
+      ...prev,
+      childrens: prev.childrens.map((child, i) =>
+        i === index ? { ...child, ...updatedData } : child
+      ),
+    }));
   };
 
   const addChild = () => {
-    setChildren((prev) => [
+    setForm((prev) => ({
       ...prev,
-      {
-        childrenName: "",
-        notes: "",
-        childrenGender: "M",
-        isActive: false,
-        childrenBirthdate: null,
-        childrenAddress: null,
-        childrenPhone: null,
-        isFatherAlive: false,
-        isMotherAlive: false,
-        isCondition: false,
-        childrenPictFile: null,
-        index: 0,
-      },
-    ]);
+      childrens: [
+        ...prev.childrens,
+        {
+          childrenName: "",
+          index: null,
+          childrenGender: "M",
+          childrenBirthdate: "",
+          childrenAddress: "",
+          childrenPhone: "",
+          isFatherAlive: true,
+          isMotherAlive: true,
+          isCondition: true,
+          isActive: true,
+          notes: "",
+          childrenPictFile: null,
+        },
+      ],
+    }));
   };
 
   const removeChild = (index: number) => {
-    const arr = [...children];
-    arr.splice(index, 1);
-    setChildren(arr);
+    setForm((prev) => ({
+      ...prev,
+      childrens: prev.childrens.filter((_, i) => i !== index),
+    }));
   };
 
-  const handleUploadChildPhoto = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number
-  ) => {
-    const file = e.target.files?.[0] ?? null;
+  const handleUploadChildPhoto = (e: any, index: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
     updateChild(index, { childrenPictFile: file });
   };
@@ -449,8 +501,27 @@ export default function CreateHome() {
         <div>
           {employeeMode === "existing" ? (
             <div>
-              <Label>Pilih Employee *</Label>
-              <Select size="large" className="w-full" options={employees} />
+              <Label>Pilih Pegawai *</Label>
+              <Select
+                size="large"
+                className="w-full"
+                options={employees}
+                showSearch
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                value={form.employeeId ?? undefined}
+                onChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    employeeId: value,
+                  }))
+                }
+              />
             </div>
           ) : (
             <div className="space-y-6">
@@ -594,7 +665,26 @@ export default function CreateHome() {
           {partnerMode === "existing" ? (
             <div>
               <Label>Pilih Partner *</Label>
-              <Select size="large" style={{ width: "100%" }} />
+              <Select
+                size="large"
+                className="w-full"
+                options={partners}
+                showSearch
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                value={form.partnerId ?? undefined}
+                onChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    partnerId: value,
+                  }))
+                }
+              />
             </div>
           ) : (
             <div className="space-y-4">
@@ -829,7 +919,26 @@ export default function CreateHome() {
           {waliMode === "existing" && (
             <div>
               <Label>Pilih Wali</Label>
-              <Select size="large" />
+              <Select
+                size="large"
+                className="w-full"
+                options={wali}
+                showSearch
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toString()
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                value={form.waliId ?? undefined}
+                onChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    waliId: value,
+                  }))
+                }
+              />
             </div>
           )}
 
@@ -899,7 +1008,7 @@ export default function CreateHome() {
         <div className="space-y-4">
           <Button onClick={addChild}>Tambah Anak</Button>
 
-          {children.map((child, index) => (
+          {form.childrens.map((child, index) => (
             <div key={index} className="border p-4 rounded space-y-3">
               <Flex justify="space-between" align="center">
                 <strong>Anak #{index + 1}</strong>
@@ -937,12 +1046,18 @@ export default function CreateHome() {
               />
 
               <Label>Tanggal Lahir</Label>
-              <Input
-                type="date"
+              <DatePicker
                 size="large"
-                value={child.childrenBirthdate ?? ""}
-                onChange={(e) =>
-                  updateChild(index, { childrenBirthdate: e.target.value })
+                className="w-full"
+                value={
+                  child.childrenBirthdate
+                    ? dayjs(child.childrenBirthdate)
+                    : null
+                }
+                onChange={(date) =>
+                  updateChild(index, {
+                    childrenBirthdate: date ? date.format("YYYY-MM-DD") : "",
+                  })
                 }
               />
 
@@ -964,24 +1079,35 @@ export default function CreateHome() {
                 }
               />
 
-              <Label>Ayah Masih Hidup?</Label>
+              <Label>Status Aktif</Label>
               <Select
                 size="large"
-                value={child.isFatherAlive}
+                value={child.isActive}
                 options={[
                   { label: "Ya", value: true },
                   { label: "Tidak", value: false },
                 ]}
+                onChange={(v) => updateChild(index, { isActive: v })}
+              />
+
+              <Label>Yatim?</Label>
+              <Select
+                size="large"
+                value={child.isFatherAlive}
+                options={[
+                  { label: "Tidak", value: true },
+                  { label: "Ya", value: false },
+                ]}
                 onChange={(v) => updateChild(index, { isFatherAlive: v })}
               />
 
-              <Label>Ibu Masih Hidup?</Label>
+              <Label>Piatu?</Label>
               <Select
                 size="large"
                 value={child.isMotherAlive}
                 options={[
-                  { label: "Ya", value: true },
-                  { label: "Tidak", value: false },
+                  { label: "Tidak", value: true },
+                  { label: "Ya", value: false },
                 ]}
                 onChange={(v) => updateChild(index, { isMotherAlive: v })}
               />

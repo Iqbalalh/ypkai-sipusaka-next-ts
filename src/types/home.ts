@@ -5,9 +5,9 @@ import { Wali } from "./wali";
 
 export interface Home {
   id: number;
-  partnerId: number;
-  employeeId: number;
-  waliId: number;
+  partnerId?: number | null;
+  employeeId?: number | null;
+  waliId?: number | null;
   createdAt: string; // ISO timestamp
   regionId: number;
   postalCode: string | null;
@@ -124,5 +124,5 @@ export interface Family {
   employee: Employee;
   partner: Partner;
   wali: Wali;
-  childrens?: Children[];
+  childrens: Children[];
 }
