@@ -461,7 +461,7 @@ export default function CreateHome() {
       {contextHolder}
 
       {/* HOME GROUP */}
-      <ComponentCard title="Home">
+      <ComponentCard title="Keluarga Asuh">
         <div className="space-y-4">
           <div>
             <Label>Wilayah *</Label>

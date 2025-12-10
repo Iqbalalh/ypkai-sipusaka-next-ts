@@ -236,13 +236,13 @@ export default function FamilyTable({
           )}
           <div>
             <span className="flex font-medium text-gray-800 dark:text-white/90">
-              {home.partnerName} {!home.isAlive ? "(Alm)" : ""}{" "}
+              {home.partnerName}
               {home.isUmkm ? (
                 <p className="ml-1 border-3 rounded border-blue-400"></p>
               ) : null}
-            </span>
-            <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
-              Partner ID: {home.partnerId}
+              {home.isAlive ? (
+                <p className="ml-1 border-3 rounded border-red-400"></p>
+              ) : null}
             </span>
           </div>
         </div>
@@ -279,6 +279,8 @@ export default function FamilyTable({
       title: "Status",
       dataIndex: "isActive",
       key: "isActive",
+      fixed: "right",
+      width: 120,
       filters: [
         { text: "Aktif", value: true },
         { text: "Tidak Aktif", value: false },

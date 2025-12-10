@@ -57,13 +57,13 @@ export default function FamilyInfoCard() {
       {contextHolder}
       {/* Home Info */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mb-6">
-        <h4 className="text-2xl gap-4 flex font-semibold text-gray-800 dark:text-white/90 mb-4">
+        <h4 className="text-2xl gap-4 flex font-semibold text-gray-800 dark:text-white/90">
           Data Keluarga{" "}
           <div>
             <Badge>{data?.selectedRegionName || "Tidak ada data"}</Badge>
           </div>
         </h4>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+        {/* <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           <InfoItem label="ID" value={data?.homeId?.toString() || "-"} />
           <InfoItem
             label="Kode Pos"
@@ -85,7 +85,7 @@ export default function FamilyInfoCard() {
                 : "-"
             }
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Employee */}
@@ -334,7 +334,9 @@ export default function FamilyInfoCard() {
                 </div>
 
                 <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                  <Button variant="outline">Edit</Button>
+                  <Link href={`/wali/edit/${data?.waliId}`}>
+                    <Button variant="outline">Edit</Button>
+                  </Link>
                 </div>
               </div>
             </div>

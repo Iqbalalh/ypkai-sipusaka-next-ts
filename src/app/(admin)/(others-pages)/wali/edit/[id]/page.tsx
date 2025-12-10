@@ -127,7 +127,7 @@ export default function UpdateWali() {
         fd.append(toSnake(key), String(value));
       });
 
-      if (photoFile) fd.append("wali_pict", photoFile);
+      if (photoFile) fd.append("photo", photoFile);
 
       const res = await fetchWithAuth(`${API_WALI}/${waliId}`, {
         method: "PATCH",

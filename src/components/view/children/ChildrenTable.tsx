@@ -310,6 +310,19 @@ export default function ChildrenTable({
     },
 
     {
+      title: "Status Aktif",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 100,
+      filters: [
+        { text: "Aktif", value: true },
+        { text: "Tidak Aktif", value: false },
+      ],
+      onFilter: (value, record) => record.isActive === value,
+      render: (a) => (a === true ? "Aktif" : "Tidak Aktif"),
+    },
+
+    {
       title: "Jenis Kelamin",
       dataIndex: "childrenGender",
       key: "childrenGender",

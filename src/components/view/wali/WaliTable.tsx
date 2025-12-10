@@ -1,7 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import { Table, Input, Space, Flex, Spin, InputRef, Image } from "antd";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import {
+  Table,
+  Input,
+  Space,
+  Flex,
+  Spin,
+  InputRef,
+  Image,
+  message,
+  Modal,
+} from "antd";
 import {
   SearchOutlined,
   LoadingOutlined,
@@ -26,44 +37,77 @@ export default function WaliTable({
 }) {
   const [data, setData] = useState<Wali[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const searchInput = useRef<InputRef>(null);
 
-  // Fetch Data Wali
-  useEffect(() => {
-    const fetchWalis = async () => {
-      try {
-        const res = await fetchWithAuth(`${API_WALI}`);
-        if (!res.ok) throw new Error("Failed to fetch wali");
-        const json: ApiResponseList<Wali> = await res.json();
-        const waliData = camelcaseKeys(json.data, { deep: true }) as Wali[];
-        setData(waliData);
-        onCountChange?.(waliData.length);
-      } catch (error) {
-        console.error("Error fetching wali:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    fetchWalis();
+  const [messageApi, contextHolder] = message.useMessage();
+
+  // ======================================
+  // FETCH DATA WALI
+  // ======================================
+  const fetchWalis = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth(API_WALI);
+      if (!res.ok) throw new Error("Failed to fetch wali");
+
+      const json: ApiResponseList<Wali> = await res.json();
+      const waliData = camelcaseKeys(json.data, { deep: true }) as Wali[];
+
+      setData(waliData);
+      onCountChange?.(waliData.length);
+    } catch (error) {
+      console.error("Error fetching wali:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [onCountChange]);
 
-  // 🔍 Fungsi Pencarian Kolom
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useEffect(() => {
+    fetchWalis();
+  }, [fetchWalis]);
+
+  // ======================================
+  // DELETE DATA
+  // ======================================
+  const handleDelete = useCallback(async () => {
+    if (!deleteId) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await fetchWithAuth(`${API_WALI}/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus");
+
+      messageApi.success("Berhasil dihapus");
+      setIsDeleteModalOpen(false);
+
+      await fetchWalis(); // refresh data setelah delete
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Gagal menghapus data");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteId, fetchWalis, messageApi]);
+
+  // ======================================
+  // SEARCH FILTER TABLE
+  // ======================================
   const getColumnSearchProps = (dataIndex: keyof Wali): any => ({
     filterDropdown: ({
       setSelectedKeys,
       selectedKeys,
       confirm,
       clearFilters,
-    }: {
-      setSelectedKeys: (selectedKeys: React.Key[]) => void;
-      selectedKeys: React.Key[];
-      confirm: () => void;
-      clearFilters: () => void;
-    }) => (
+    }: any) => (
       <div style={{ padding: 8 }}>
         <Input
           ref={searchInput}
@@ -75,6 +119,7 @@ export default function WaliTable({
           onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
           style={{ marginBottom: 8, display: "block" }}
         />
+
         <Space>
           <button
             className="text-white bg-blue-500 px-2 py-1 rounded"
@@ -91,25 +136,27 @@ export default function WaliTable({
         </Space>
       </div>
     ),
+
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
     ),
-    onFilter: (value: string | number | boolean, record: Wali): boolean => {
-      const fieldValue = record[dataIndex];
-      return fieldValue
-        ? String(fieldValue).toLowerCase().includes(String(value).toLowerCase())
-        : false;
-    },
+
+    onFilter: (value: string, record: Wali) =>
+      String(record[dataIndex] || "")
+        .toLowerCase()
+        .includes(value.toLowerCase()),
+
     onOpenChange: (visible: boolean) => {
       if (visible) setTimeout(() => searchInput.current?.select(), 100);
     },
+
     render: (text: string) =>
       searchedColumn === dataIndex ? (
         <Highlighter
           highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
           searchWords={[searchText]}
           autoEscape
-          textToHighlight={text ? text.toString() : ""}
+          textToHighlight={text || ""}
         />
       ) : (
         text
@@ -131,70 +178,53 @@ export default function WaliTable({
     setSearchText("");
   };
 
-  // 🧱 Kolom tabel
+  // ======================================
+  // TABLE COLUMNS
+  // ======================================
   const columns: ColumnsType<Wali> = [
     {
       title: "ID",
       dataIndex: "id",
-      key: "id",
       width: 80,
       render: (val) => val ?? "-",
     },
     {
       title: "Foto",
       dataIndex: "waliPict",
-      key: "waliPict",
-      render: (val, wali) =>
-        val ? (
-          <center>
-            <Image
-              src={val || "/images/user/alt-user.png"}
-              width={40}
-              height={40}
-              alt={wali.waliName}
-              className="rounded-full object-cover w-10 h-10"
-            />
-          </center>
-        ) : (
-          <Image
-            src={"/images/user/alt-user.png"}
-            alt={"N/A"}
-            width={40}
-            height={40}
-            className="rounded-full object-cover w-10 h-10"
-          />
-        ),
+      render: (val, wali) => (
+        <Image
+          src={val || "/images/user/alt-user.png"}
+          alt={wali.waliName}
+          width={40}
+          height={40}
+          className="rounded-full object-cover w-10 h-10"
+        />
+      ),
     },
     {
       title: "Nama Wali",
       dataIndex: "waliName",
-      key: "waliName",
       ...getColumnSearchProps("waliName"),
     },
     {
       title: "Relasi",
       dataIndex: "relation",
-      key: "relation",
       ...getColumnSearchProps("relation"),
       render: (text) => text || "-",
     },
     {
       title: "Alamat",
       dataIndex: "waliAddress",
-      key: "waliAddress",
       ...getColumnSearchProps("waliAddress"),
       render: (text) => text || "-",
     },
     {
       title: "Koordinat",
       dataIndex: "addressCoordinate",
-      key: "addressCoordinate",
       render: (text) =>
         text ? (
           <a
-            href={`https://www.google.com/maps?q=${encodeURIComponent(
-              String(text)
-            )}`}
+            href={`https://www.google.com/maps?q=${encodeURIComponent(text)}`}
             target="_blank"
             rel="noreferrer"
             className="text-blue-600 hover:underline"
@@ -208,31 +238,27 @@ export default function WaliTable({
     {
       title: "No. Telepon",
       dataIndex: "waliPhone",
-      key: "waliPhone",
       ...getColumnSearchProps("waliPhone"),
       render: (text) => text || "-",
     },
     {
-      title: "Dibuat Pada",
+      title: "Dibuat",
       dataIndex: "createdAt",
-      key: "createdAt",
       sorter: (a, b) =>
-        (new Date(a.createdAt ?? 0).getTime() || 0) -
-        (new Date(b.createdAt ?? 0).getTime() || 0),
+        new Date(a.createdAt || 0).getTime() -
+        new Date(b.createdAt || 0).getTime(),
       render: (val) => (val ? new Date(val).toLocaleString() : "-"),
     },
     {
-      title: "Diperbarui Pada",
+      title: "Diperbarui",
       dataIndex: "updatedAt",
-      key: "updatedAt",
       sorter: (a, b) =>
-        (new Date(a.updatedAt ?? 0).getTime() || 0) -
-        (new Date(b.updatedAt ?? 0).getTime() || 0),
+        new Date(a.updatedAt || 0).getTime() -
+        new Date(b.updatedAt || 0).getTime(),
       render: (val) => (val ? new Date(val).toLocaleString() : "-"),
     },
     {
       title: "Aksi",
-      key: "actions",
       fixed: "right",
       width: 120,
       render: (_, wali) => (
@@ -242,12 +268,23 @@ export default function WaliTable({
               <EyeOutlined />
             </Button>
           </Link>
+
           <Link href={`wali/edit/${wali.id}`}>
             <Button size="xs">
               <EditOutlined />
             </Button>
           </Link>
-          <Button size="xs">
+
+          <Button
+            size="xs"
+            onClick={() => {
+              if (!wali.id) {
+                return;
+              }
+              setDeleteId(wali.id);
+              setIsDeleteModalOpen(true);
+            }}
+          >
             <DeleteOutlined />
           </Button>
         </div>
@@ -255,6 +292,9 @@ export default function WaliTable({
     },
   ];
 
+  // ======================================
+  // LOADING UI
+  // ======================================
   if (loading)
     return (
       <div className="flex justify-center items-center gap-4 h-40 text-gray-500">
@@ -265,14 +305,49 @@ export default function WaliTable({
       </div>
     );
 
+  // ======================================
+  // RENDER
+  // ======================================
   return (
     <div className="overflow-x-auto">
+      {contextHolder}
+
+      {/* MODAL DELETE */}
+      <Modal
+        title="Konfirmasi Hapus"
+        open={isDeleteModalOpen}
+        onCancel={() => !deleteLoading && setIsDeleteModalOpen(false)}
+        footer={[
+          <Button
+            key="cancel"
+            size="xs"
+            className="mr-2"
+            onClick={() => setIsDeleteModalOpen(false)}
+            disabled={deleteLoading}
+          >
+            Batal
+          </Button>,
+          <Button
+            key="delete"
+            size="xs"
+            className="bg-red-500"
+            disabled={deleteLoading}
+            onClick={handleDelete}
+          >
+            Hapus
+          </Button>,
+        ]}
+      >
+        <p>Item yang sudah dihapus tidak dapat dipulihkan.</p>
+      </Modal>
+
+      {/* TABLE */}
       <Table
         columns={columns}
         dataSource={data}
         rowKey="id"
-        pagination={{ pageSize: 50, showSizeChanger: false }}
         bordered
+        pagination={{ pageSize: 50, showSizeChanger: false }}
         scroll={{ x: "max-content", y: 500 }}
         onChange={(pagination, filters, sorter, extra) => {
           onCountChange?.(extra.currentDataSource.length);
