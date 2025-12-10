@@ -1004,18 +1004,18 @@ export default function CreateHome() {
       </ComponentCard>
 
       {/* CHILDREN GROUP */}
-      <ComponentCard title="Children">
+      <ComponentCard title="Anak Asuh">
         <div className="space-y-4">
           <Button onClick={addChild}>Tambah Anak</Button>
 
           {form.childrens.map((child, index) => (
-            <div key={index} className="border p-4 rounded space-y-3">
+            <div key={index} className="border p-4 rounded space-y-5">
               <Flex justify="space-between" align="center">
                 <strong>Anak #{index + 1}</strong>
                 <Button onClick={() => removeChild(index)}>Hapus</Button>
               </Flex>
 
-              <Label>Nama Anak</Label>
+              <Label className="mt-3">Nama Anak</Label>
               <Input
                 size="large"
                 value={child.childrenName}
@@ -1024,7 +1024,7 @@ export default function CreateHome() {
                 }
               />
 
-              <Label>Anak-ke</Label>
+              <Label className="mt-3">Anak-ke</Label>
               <Input
                 size="large"
                 type="number"
@@ -1034,9 +1034,10 @@ export default function CreateHome() {
                 }
               />
 
-              <Label>Gender</Label>
+              <Label className="mt-3">Gender</Label>
               <Select
                 size="large"
+                className="w-full"
                 value={child.childrenGender}
                 options={[
                   { label: "Laki-laki", value: "M" },
@@ -1045,7 +1046,7 @@ export default function CreateHome() {
                 onChange={(v) => updateChild(index, { childrenGender: v })}
               />
 
-              <Label>Tanggal Lahir</Label>
+              <Label className="mt-3">Tanggal Lahir</Label>
               <DatePicker
                 size="large"
                 className="w-full"
@@ -1061,7 +1062,7 @@ export default function CreateHome() {
                 }
               />
 
-              <Label>Alamat Anak</Label>
+              <Label className="mt-3">Alamat Anak</Label>
               <Input
                 size="large"
                 value={child.childrenAddress ?? ""}
@@ -1070,7 +1071,7 @@ export default function CreateHome() {
                 }
               />
 
-              <Label>No. HP Anak</Label>
+              <Label className="mt-3">No. HP Anak</Label>
               <Input
                 size="large"
                 value={child.childrenPhone ?? ""}
@@ -1079,9 +1080,10 @@ export default function CreateHome() {
                 }
               />
 
-              <Label>Status Aktif</Label>
+              <Label className="mt-3">Status Aktif</Label>
               <Select
                 size="large"
+                className="w-full"
                 value={child.isActive}
                 options={[
                   { label: "Ya", value: true },
@@ -1090,9 +1092,10 @@ export default function CreateHome() {
                 onChange={(v) => updateChild(index, { isActive: v })}
               />
 
-              <Label>Yatim?</Label>
+              <Label className="mt-3">Yatim</Label>
               <Select
                 size="large"
+                className="w-full"
                 value={child.isFatherAlive}
                 options={[
                   { label: "Tidak", value: true },
@@ -1101,9 +1104,10 @@ export default function CreateHome() {
                 onChange={(v) => updateChild(index, { isFatherAlive: v })}
               />
 
-              <Label>Piatu?</Label>
+              <Label className="mt-3">Piatu</Label>
               <Select
                 size="large"
+                className="w-full"
                 value={child.isMotherAlive}
                 options={[
                   { label: "Tidak", value: true },
@@ -1112,9 +1116,10 @@ export default function CreateHome() {
                 onChange={(v) => updateChild(index, { isMotherAlive: v })}
               />
 
-              <Label>Kondisi Khusus?</Label>
+              <Label className="mt-3">Kondisi Khusus</Label>
               <Select
                 size="large"
+                className="w-full"
                 value={child.isCondition}
                 options={[
                   { label: "Normal", value: true },
@@ -1123,17 +1128,15 @@ export default function CreateHome() {
                 onChange={(v) => updateChild(index, { isCondition: v })}
               />
 
-              <Label>Catatan</Label>
+              <Label className="mt-3">Catatan</Label>
               <TextArea
                 rows={2}
                 value={child.notes ?? ""}
                 onChange={(e) => updateChild(index, { notes: e.target.value })}
               />
 
-              <Label>Foto Anak</Label>
-              <Input
-                size="large"
-                type="file"
+              <Label className="mt-3">Foto Anak</Label>
+              <FileInput
                 onChange={(e) => handleUploadChildPhoto(e, index)}
               />
             </div>

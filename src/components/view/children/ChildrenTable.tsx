@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import Highlighter from "react-highlight-words";
-import camelcaseKeys from "camelcase-keys";
-
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { API_CHILDRENS } from "@/lib/apiEndpoint";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 
 import {
   Table,
   Input,
   Space,
   Flex,
-  Image,
   Spin,
   InputRef,
+  Image,
   message,
+  Modal,
 } from "antd";
 
 import {
@@ -28,66 +28,124 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 
+import Highlighter from "react-highlight-words";
 import type { ColumnsType } from "antd/es/table";
 
-import Badge from "@/components/ui/badge/Badge";
+import Link from "next/link";
+import camelcaseKeys from "camelcase-keys";
+
 import Button from "@/components/ui/button/Button";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { API_CHILDRENS, API_REGIONS } from "@/lib/apiEndpoint";
 
 import { Children } from "@/types/children";
+import { ApiResponseList } from "@/types/api-response";
+import { Region } from "@/types/region";
+import Badge from "@/components/ui/badge/Badge";
 
 export default function ChildrenTable({
   onCountChange,
 }: {
   onCountChange?: (count: number) => void;
 }) {
+  // ==========================
+  // STATE
+  // ==========================
   const [data, setData] = useState<Children[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
-  const searchInput = React.useRef<InputRef>(null);
+  const searchInput = useRef<InputRef>(null);
+
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const [messageApi, contextHolder] = message.useMessage();
 
-  useEffect(() => {
-    const fetchChildren = async () => {
+  // ==========================
+  // FETCH REGIONS
+  // ==========================
+  const fetchRegions = useCallback(async () => {
       try {
-        const res = await fetchWithAuth(`${API_CHILDRENS}`);
-        if (!res.ok) throw new Error("Failed to fetch children");
-        const json = await res.json();
-        const children = camelcaseKeys(json.data ?? json, {
-          deep: true,
-        }) as Children[];
-        setData(children);
-        onCountChange?.(children.length);
-      } catch (error) {
-        console.error("Error fetching children:", error);
-        messageApi.error({
-          content: "Gagal mengambil data anak.",
-          key: "save",
-          duration: 2,
-        });
-      } finally {
-        setLoading(false);
+        const res = await fetchWithAuth(API_REGIONS + "/list");
+        if (!res.ok) throw new Error("Failed to fetch regions");
+  
+        const json: ApiResponseList<Region> = await res.json();
+        const regionList = camelcaseKeys(json.data, { deep: true }) as Region[];
+  
+        setRegions(regionList);
+      } catch (err) {
+        console.error("Error fetching regions:", err);
       }
-    };
+    }, []);
 
+  // ==========================
+  // FETCH CHILDREN
+  // ==========================
+  const fetchChildren = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth(API_CHILDRENS);
+      if (!res.ok) throw new Error("Failed to fetch children");
+
+      const json = await res.json();
+      const children = camelcaseKeys(json.data ?? json, {
+        deep: true,
+      }) as Children[];
+
+      setData(children);
+      onCountChange?.(children.length);
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Gagal mengambil data anak");
+    } finally {
+      setLoading(false);
+    }
+  }, [onCountChange, messageApi]);
+
+  useEffect(() => {
+    fetchRegions();
     fetchChildren();
-  }, [messageApi, onCountChange]);
+  }, [fetchChildren, fetchRegions]);
 
-  // =====================
+  // ==========================
+  // DELETE HANDLER
+  // ==========================
+  const handleDelete = useCallback(async () => {
+    if (!deleteId) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await fetchWithAuth(`${API_CHILDRENS}/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus");
+
+      messageApi.success("Berhasil dihapus");
+      setIsDeleteModalOpen(false);
+
+      fetchChildren();
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Gagal menghapus data");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteId, fetchChildren, messageApi]);
+
+  // ==========================
   // SEARCH CONFIG
-  // =====================
+  // ==========================
   const getColumnSearchProps = (dataIndex: string): any => ({
     filterDropdown: ({
       setSelectedKeys,
       selectedKeys,
       confirm,
       clearFilters,
-    }: {
-      setSelectedKeys: (keys: React.Key[]) => void;
-      selectedKeys: React.Key[];
-      confirm: () => void;
-      clearFilters: () => void;
-    }) => (
+    }: any) => (
       <div style={{ padding: 8 }}>
         <Input
           ref={searchInput}
@@ -96,13 +154,18 @@ export default function ChildrenTable({
           onChange={(e) =>
             setSelectedKeys(e.target.value ? [e.target.value] : [])
           }
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          onPressEnter={() =>
+            handleSearch(selectedKeys, confirm, String(dataIndex))
+          }
           style={{ marginBottom: 8, display: "block" }}
         />
+
         <Space>
           <button
             className="text-white bg-blue-500 px-2 py-1 rounded"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            onClick={() =>
+              handleSearch(selectedKeys, confirm, String(dataIndex))
+            }
           >
             Cari
           </button>
@@ -135,9 +198,6 @@ export default function ChildrenTable({
         : false;
     },
 
-    onOpenChange: (visible: boolean) => {
-      if (visible) setTimeout(() => searchInput.current?.select(), 100);
-    },
 
     render: (text: string) =>
       searchedColumn === dataIndex ? (
@@ -145,7 +205,7 @@ export default function ChildrenTable({
           highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
           searchWords={[searchText]}
           autoEscape
-          textToHighlight={text ? text.toString() : ""}
+          textToHighlight={text || ""}
         />
       ) : (
         text
@@ -167,9 +227,82 @@ export default function ChildrenTable({
     setSearchText("");
   };
 
-  // =====================
+  // ==========================
   // TABLE COLUMNS
-  // =====================
+  // ==========================
+  // const columns: ColumnsType<Children> = [
+  //   {
+  //     title: "ID",
+  //     dataIndex: "id",
+  //     width: 70,
+  //   },
+  //   {
+  //     title: "Foto",
+  //     dataIndex: "childrenPict",
+  //     render: (val, row) => (
+  //       <Image
+  //         src={val || "/images/user/alt-user.png"}
+  //         alt={row.childrenName}
+  //         width={40}
+  //         height={40}
+  //         className="rounded-full object-cover w-10 h-10"
+  //       />
+  //     ),
+  //   },
+  //   {
+  //     title: "Nama Anak",
+  //     dataIndex: "childrenName",
+  //     ...getColumnSearchProps("childrenName"),
+  //   },
+  //   {
+  //     title: "Orangtua",
+  //     dataIndex: "orangtua",
+  //     render: (_, row) =>
+  //       `${row.employeeName ?? "-"} - ${row.partnerName ?? "-"}`,
+  //   },
+
+  //   // REGION
+
+  //   {
+  //     title: "Wali",
+  //     dataIndex: "waliName",
+  //     render: (val) => val || "-",
+  //     ...getColumnSearchProps("waliName"),
+  //   },
+
+  //   {
+  //     title: "Aksi",
+  //     fixed: "right",
+  //     width: 120,
+  //     render: (_, row) => (
+  //       <div className="flex gap-2 text-xs">
+  //         <Link href={`children/view/${row.id}`}>
+  //           <Button size="xs">
+  //             <EyeOutlined />
+  //           </Button>
+  //         </Link>
+
+  //         <Link href={`children/edit/${row.id}`}>
+  //           <Button size="xs">
+  //             <EditOutlined />
+  //           </Button>
+  //         </Link>
+
+  //         <Button
+  //           size="xs"
+  //           onClick={() => {
+  //             if (!row.id) return;
+  //             setDeleteId(row.id);
+  //             setIsDeleteModalOpen(true);
+  //           }}
+  //         >
+  //           <DeleteOutlined />
+  //         </Button>
+  //       </div>
+  //     ),
+  //   },
+  // ];
+
   const columns: ColumnsType<Children> = [
     {
       title: "ID",
@@ -302,6 +435,23 @@ export default function ChildrenTable({
     },
 
     {
+      title: "Wilayah",
+      dataIndex: "regionId",
+      filters: regions.map((r) => ({
+        text: r.regionName,
+        value: r.regionId,
+      })),
+      onFilter: (value, partner) =>
+        String(partner.regionId) === String(value),
+      render: (_, partner) => {
+        const region = regions.find(
+          (r) => r.regionId === partner.regionId
+        );
+        return region ? region.regionName : "-";
+      },
+    },
+
+    {
       title: "Nama Wali",
       dataIndex: "waliName",
       key: "waliName",
@@ -319,7 +469,16 @@ export default function ChildrenTable({
         { text: "Tidak Aktif", value: false },
       ],
       onFilter: (value, record) => record.isActive === value,
-      render: (a) => (a === true ? "Aktif" : "Tidak Aktif"),
+      render: (a) =>
+        a === true ? (
+          <Badge size="sm" color="success">
+            Aktif
+          </Badge>
+        ) : (
+          <Badge size="sm" color="error">
+            Tidak Aktif
+          </Badge>
+        ),
     },
 
     {
@@ -369,7 +528,14 @@ export default function ChildrenTable({
               <EditOutlined />
             </Button>
           </Link>
-          <Button size="xs">
+          <Button
+            size="xs"
+            onClick={() => {
+              if (!child.id) return;
+              setDeleteId(child.id);
+              setIsDeleteModalOpen(true);
+            }}
+          >
             <DeleteOutlined />
           </Button>
         </div>
@@ -377,7 +543,9 @@ export default function ChildrenTable({
     },
   ];
 
+  // ==========================
   // LOADING
+  // ==========================
   if (loading)
     return (
       <div className="flex justify-center items-center gap-4 h-40 text-gray-500">
@@ -388,22 +556,53 @@ export default function ChildrenTable({
       </div>
     );
 
+  // ==========================
+  // RENDER
+  // ==========================
   return (
-    <div>
+    <div className="overflow-x-auto">
       {contextHolder}
-      <div className="overflow-x-auto">
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          bordered
-          pagination={{ pageSize: 50, showSizeChanger: false }}
-          scroll={{ x: "max-content", y: 500 }}
-          onChange={(pagination, filters, sorter, extra) => {
-            onCountChange?.(extra.currentDataSource.length);
-          }}
-        />
-      </div>
+
+      {/* MODAL DELETE */}
+      <Modal
+        title="Konfirmasi Hapus"
+        open={isDeleteModalOpen}
+        onCancel={() => !deleteLoading && setIsDeleteModalOpen(false)}
+        footer={[
+          <Button
+            key="cancel"
+            size="xs"
+            onClick={() => setIsDeleteModalOpen(false)}
+            disabled={deleteLoading}
+          >
+            Batal
+          </Button>,
+          <Button
+            key="delete"
+            size="xs"
+            className="bg-red-500"
+            disabled={deleteLoading}
+            onClick={handleDelete}
+          >
+            Hapus
+          </Button>,
+        ]}
+      >
+        <p>Data yang dihapus tidak dapat dipulihkan.</p>
+      </Modal>
+
+      {/* TABLE */}
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
+        bordered
+        pagination={{ pageSize: 50, showSizeChanger: false }}
+        scroll={{ x: "max-content", y: 500 }}
+        onChange={(pagination, filters, sorter, extra) =>
+          onCountChange?.(extra.currentDataSource.length)
+        }
+      />
     </div>
   );
 }

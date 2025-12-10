@@ -14,7 +14,6 @@ import {
 import {
   SearchOutlined,
   LoadingOutlined,
-  DeleteOutlined,
   EyeOutlined,
   EditOutlined,
 } from "@ant-design/icons";
@@ -240,7 +239,7 @@ export default function FamilyTable({
               {home.isUmkm ? (
                 <p className="ml-1 border-3 rounded border-blue-400"></p>
               ) : null}
-              {home.isAlive ? (
+              {!home.isAlive ? (
                 <p className="ml-1 border-3 rounded border-red-400"></p>
               ) : null}
             </span>
@@ -308,9 +307,6 @@ export default function FamilyTable({
               <EditOutlined />
             </Button>
           </Link>
-          <Button size="xs">
-            <DeleteOutlined />
-          </Button>
         </div>
       ),
     },

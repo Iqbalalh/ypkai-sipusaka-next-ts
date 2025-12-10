@@ -23,4 +23,5 @@ export interface Children {
   employeeName?: string | null;
   partnerName?: string | null;
   waliName?: string | null;
+  regionId?: number;
 }

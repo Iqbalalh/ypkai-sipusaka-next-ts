@@ -1,114 +1,148 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Highlighter from "react-highlight-words";
 import camelcaseKeys from "camelcase-keys";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
-
-import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
 
 import {
   Table,
   Input,
   Space,
   Flex,
-  Image,
   Spin,
   InputRef,
+  Image,
   message,
+  Modal,
 } from "antd";
+
 import {
   SearchOutlined,
   LoadingOutlined,
   DeleteOutlined,
-  EyeOutlined,
   EditOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
-import type { ColumnsType } from "antd/es/table";
 
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
 
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
+import type { ColumnsType } from "antd/es/table";
+
+import { Employee } from "@/types/employee";
 import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
-import { Employee } from "@/types/employee";
 
 export default function EmployeeTable({
   onCountChange,
 }: {
   onCountChange?: (count: number) => void;
 }) {
+  // ==========================
+  // STATE
+  // ==========================
   const [data, setData] = useState<Employee[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
-  const searchInput = React.useRef<InputRef>(null);
+  const searchInput = useRef<InputRef>(null);
+
   const [messageApi, contextHolder] = message.useMessage();
 
+  // ==========================
+  // DELETE STATE
+  // ==========================
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // ==========================
+  // FETCH REGIONS
+  // ==========================
+  const fetchRegions = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth(API_REGIONS + "/list");
+      if (!res.ok) throw new Error("Failed to fetch regions");
+
+      const json: ApiResponseList<Region> = await res.json();
+      const regionList = camelcaseKeys(json.data, { deep: true }) as Region[];
+
+      setRegions(regionList);
+    } catch (err) {
+      console.error("Error fetching regions:", err);
+    }
+  }, []);
+
+  // ==========================
+  // FETCH EMPLOYEES
+  // ==========================
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const res = await fetchWithAuth(API_EMPLOYEES);
+      if (!res.ok) throw new Error("Failed to fetch employees");
+
+      const json = await res.json();
+      const employees = camelcaseKeys(json.data ?? json, {
+        deep: true,
+      }) as Employee[];
+
+      setData(employees);
+      onCountChange?.(employees.length);
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Gagal mengambil data pegawai");
+    } finally {
+      setLoading(false);
+    }
+  }, [onCountChange, messageApi]);
+
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await fetchWithAuth(`${API_EMPLOYEES}`);
-        if (!res.ok) throw new Error("Failed to fetch employees");
-        const json: ApiResponseList<Employee> = await res.json();
-        const employees = camelcaseKeys(json.data, {
-          deep: true,
-        }) as Employee[];
-        setData(employees);
-        onCountChange?.(employees.length);
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-        messageApi.error({
-          content: "Gagal mengambil data pegawai.",
-          key: "save",
-          duration: 2,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEmployees();
-  }, [messageApi, onCountChange]);
-
-  useEffect(() => {
-    const fetchRegions = async () => {
-      try {
-        const res = await fetchWithAuth(`${API_REGIONS}` + "/list");
-        if (!res.ok) throw new Error("Failed to fetch regions");
-        const json: ApiResponseList<Region> = await res.json();
-        const regionsData = camelcaseKeys(json.data, {
-          deep: true,
-        }) as Region[];
-        setRegions(regionsData);
-      } catch (error) {
-        console.error("Error fetching regions:", error);
-        messageApi.error({
-          content: "Gagal mengambil data wilayah.",
-          key: "save",
-          duration: 2,
-        });
-      }
-    };
-
     fetchRegions();
-  }, [messageApi]);
+    fetchEmployees();
+  }, [fetchEmployees, fetchRegions]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const getColumnSearchProps = (dataIndex: keyof Employee): any => ({
+  // ==========================
+  // DELETE HANDLER
+  // ==========================
+  const handleDelete = useCallback(async () => {
+    if (!deleteId) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await fetchWithAuth(`${API_EMPLOYEES}/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus");
+
+      messageApi.success("Pegawai berhasil dihapus");
+      setIsDeleteModalOpen(false);
+
+      fetchEmployees();
+    } catch (err) {
+      console.error(err);
+      messageApi.error("Gagal menghapus data pegawai");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deleteId, fetchEmployees, messageApi]);
+
+  // ==========================
+  // SEARCH CONFIG
+  // ==========================
+  const getColumnSearchProps = (dataIndex: string): any => ({
     filterDropdown: ({
       setSelectedKeys,
       selectedKeys,
       confirm,
       clearFilters,
-    }: {
-      setSelectedKeys: (selectedKeys: React.Key[]) => void;
-      selectedKeys: React.Key[];
-      confirm: () => void;
-      clearFilters: () => void;
-    }) => (
+    }: any) => (
       <div style={{ padding: 8 }}>
         <Input
           ref={searchInput}
@@ -117,13 +151,18 @@ export default function EmployeeTable({
           onChange={(e) =>
             setSelectedKeys(e.target.value ? [e.target.value] : [])
           }
-          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          onPressEnter={() =>
+            handleSearch(selectedKeys, confirm, String(dataIndex))
+          }
           style={{ marginBottom: 8, display: "block" }}
         />
+
         <Space>
           <button
             className="text-white bg-blue-500 px-2 py-1 rounded"
-            onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+            onClick={() =>
+              handleSearch(selectedKeys, confirm, String(dataIndex))
+            }
           >
             Cari
           </button>
@@ -136,25 +175,25 @@ export default function EmployeeTable({
         </Space>
       </div>
     ),
+
     filterIcon: (filtered: boolean) => (
       <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
     ),
-    onFilter: (value: string | number | boolean, record: Employee): boolean => {
-      const fieldValue = record[dataIndex];
-      return fieldValue
-        ? String(fieldValue).toLowerCase().includes(String(value).toLowerCase())
+
+    onFilter: (value: any, record: Employee) => {
+      const field = (record as any)[dataIndex];
+      return field
+        ? String(field).toLowerCase().includes(String(value).toLowerCase())
         : false;
     },
-    onOpenChange: (visible: boolean) => {
-      if (visible) setTimeout(() => searchInput.current?.select(), 100);
-    },
+
     render: (text: string) =>
       searchedColumn === dataIndex ? (
         <Highlighter
           highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
           searchWords={[searchText]}
           autoEscape
-          textToHighlight={text ? text.toString() : ""}
+          textToHighlight={text || ""}
         />
       ) : (
         text
@@ -164,11 +203,11 @@ export default function EmployeeTable({
   const handleSearch = (
     selectedKeys: React.Key[],
     confirm: () => void,
-    dataIndex: keyof Employee
+    dataIndex: string
   ) => {
     confirm();
     setSearchText(String(selectedKeys[0]));
-    setSearchedColumn(String(dataIndex));
+    setSearchedColumn(dataIndex);
   };
 
   const handleReset = (clearFilters: () => void) => {
@@ -176,6 +215,9 @@ export default function EmployeeTable({
     setSearchText("");
   };
 
+  // ==========================
+  // TABLE COLUMNS
+  // ==========================
   const columns: ColumnsType<Employee> = [
     {
       title: "ID",
@@ -197,7 +239,7 @@ export default function EmployeeTable({
             className="rounded-full object-cover w-10 h-10"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
             <Image
               src={"/images/user/alt-user.png"}
               alt={"N/A"}
@@ -303,12 +345,21 @@ export default function EmployeeTable({
               <EyeOutlined />
             </Button>
           </Link>
+
           <Link href={`employee/edit/${emp.id}`}>
             <Button size="xs">
               <EditOutlined />
             </Button>
           </Link>
-          <Button size="xs">
+
+          <Button
+            size="xs"
+            onClick={() => {
+              if (!emp.id) return;
+              setDeleteId(emp.id);
+              setIsDeleteModalOpen(true);
+            }}
+          >
             <DeleteOutlined />
           </Button>
         </div>
@@ -316,6 +367,9 @@ export default function EmployeeTable({
     },
   ];
 
+  // ==========================
+  // LOADING
+  // ==========================
   if (loading)
     return (
       <div className="flex justify-center items-center gap-4 h-40 text-gray-500">
@@ -326,22 +380,36 @@ export default function EmployeeTable({
       </div>
     );
 
+  // ==========================
+  // RENDER
+  // ==========================
   return (
-    <div>
+    <div className="overflow-x-auto">
       {contextHolder}
-      <div className="overflow-x-auto">
-        <Table
-          columns={columns}
-          dataSource={data}
-          rowKey="id"
-          pagination={{ pageSize: 50, showSizeChanger: false }}
-          bordered
-          scroll={{ x: "max-content", y: 500 }}
-          onChange={(pagination, filters, sorter, extra) => {
-            onCountChange?.(extra.currentDataSource.length);
-          }}
-        />
-      </div>
+
+      {/* DELETE MODAL */}
+      <Modal
+        title="Konfirmasi Hapus"
+        open={isDeleteModalOpen}
+        onOk={handleDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        okText={deleteLoading ? "Menghapus..." : "Hapus"}
+        okButtonProps={{ danger: true, loading: deleteLoading }}
+      >
+        <p>Apakah Anda yakin ingin menghapus pegawai ini?</p>
+      </Modal>
+
+      <Table
+        columns={columns}
+        dataSource={data}
+        rowKey="id"
+        bordered
+        pagination={{ pageSize: 50, showSizeChanger: false }}
+        scroll={{ x: "max-content", y: 500 }}
+        onChange={(pagination, filters, sorter, extra) =>
+          onCountChange?.(extra.currentDataSource.length)
+        }
+      />
     </div>
   );
 }
