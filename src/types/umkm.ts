@@ -15,7 +15,7 @@ export interface Umkm {
   updatedAt: string;
   waliId: number | null;
   childrenId: number | null;
-  umkm_pict?: string | null;
+  umkmPict?: string | null;
 
   // Non-native Field
   regionName?: string | null;

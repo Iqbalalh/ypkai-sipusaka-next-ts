@@ -169,6 +169,7 @@ export default function UpdateUmkm() {
           }))
         );
 
+
         // Set form default
         setForm({
           ...umkmData,
@@ -215,6 +216,13 @@ export default function UpdateUmkm() {
 
       Object.entries(form).forEach(([key, value]) => {
         if (value === null || value === undefined) return;
+
+        // khusus umkmId ubah key menjadi id
+        if (key === "umkmId") {
+          fd.append("id", String(value));
+          return;
+        }
+
         fd.append(toSnake(key), String(value));
       });
 
@@ -292,6 +300,28 @@ export default function UpdateUmkm() {
               </div>
 
               <div>
+                <Label>Wilayah *</Label>
+                <Select
+                  className="w-full"
+                  size="large"
+                  options={regions}
+                  value={form.regionId}
+                  onChange={(v) => setForm({ ...form, regionId: v })}
+                />
+              </div>
+
+              <div>
+                <Label>Kecamatan *</Label>
+                <Select
+                  className="w-full"
+                  size="large"
+                  options={subdistricts}
+                  value={form.subdistrictId}
+                  onChange={(v) => setForm({ ...form, subdistrictId: v })}
+                />
+              </div>
+
+              <div>
                 <Label>Jenis Usaha</Label>
                 <Input
                   size="large"
@@ -321,28 +351,6 @@ export default function UpdateUmkm() {
           <ComponentCard title="* Wajib Diisi">
             <div className="space-y-6">
               <div>
-                <Label>Wilayah *</Label>
-                <Select
-                  className="w-full"
-                  size="large"
-                  options={regions}
-                  value={form.regionId}
-                  onChange={(v) => setForm({ ...form, regionId: v })}
-                />
-              </div>
-
-              <div>
-                <Label>Kecamatan *</Label>
-                <Select
-                  className="w-full"
-                  size="large"
-                  options={subdistricts}
-                  value={form.subdistrictId}
-                  onChange={(v) => setForm({ ...form, subdistrictId: v })}
-                />
-              </div>
-
-              <div>
                 <Label>Kode Pos</Label>
                 <Input
                   size="large"
@@ -365,19 +373,10 @@ export default function UpdateUmkm() {
               </div>
 
               <div>
-                <Label>Pasangan (Opsional)</Label>
+                <Label>Pegawai</Label>
                 <Select
                   size="large"
-                  options={partners}
-                  value={form.partnerId}
-                  onChange={(v) => setForm({ ...form, partnerId: v })}
-                />
-              </div>
-
-              <div>
-                <Label>Pegawai (Opsional)</Label>
-                <Select
-                  size="large"
+                  className="w-full"
                   options={employees}
                   value={form.employeeId}
                   onChange={(v) => setForm({ ...form, employeeId: v })}
@@ -385,9 +384,21 @@ export default function UpdateUmkm() {
               </div>
 
               <div>
+                <Label>Pasangan (Opsional)</Label>
+                <Select
+                  size="large"
+                  className="w-full"
+                  options={partners}
+                  value={form.partnerId}
+                  onChange={(v) => setForm({ ...form, partnerId: v })}
+                />
+              </div>
+
+              <div>
                 <Label>Wali (Opsional)</Label>
                 <Select
                   size="large"
+                  className="w-full"
                   options={wali}
                   value={form.waliId}
                   onChange={(v) => setForm({ ...form, waliId: v })}
@@ -398,6 +409,7 @@ export default function UpdateUmkm() {
                 <Label>Anak (Opsional)</Label>
                 <Select
                   size="large"
+                  className="w-full"
                   options={childrens}
                   value={form.childrenId}
                   onChange={(v) => setForm({ ...form, childrenId: v })}

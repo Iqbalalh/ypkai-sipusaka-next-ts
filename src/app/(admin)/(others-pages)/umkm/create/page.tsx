@@ -256,6 +256,28 @@ export default function CreateUmkm() {
               </div>
 
               <div>
+                <Label>Wilayah *</Label>
+                <Select
+                  size="large"
+                  className="w-full"
+                  options={regions}
+                  value={form.regionId}
+                  onChange={(v) => setForm({ ...form, regionId: v })}
+                />
+              </div>
+
+              <div>
+                <Label>Kecamatan *</Label>
+                <Select
+                  size="large"
+                  className="w-full"
+                  options={subdistricts}
+                  value={form.subdistrictId}
+                  onChange={(v) => setForm({ ...form, subdistrictId: v })}
+                />
+              </div>
+
+              <div>
                 <Label>Produk</Label>
                 <Input
                   size="large"
@@ -285,28 +307,6 @@ export default function CreateUmkm() {
           <ComponentCard title="Detail Lokasi & Relasi">
             <div className="space-y-6">
               <div>
-                <Label>Wilayah *</Label>
-                <Select
-                  size="large"
-                  className="w-full"
-                  options={regions}
-                  value={form.regionId}
-                  onChange={(v) => setForm({ ...form, regionId: v })}
-                />
-              </div>
-
-              <div>
-                <Label>Kecamatan *</Label>
-                <Select
-                  size="large"
-                  className="w-full"
-                  options={subdistricts}
-                  value={form.subdistrictId}
-                  onChange={(v) => setForm({ ...form, subdistrictId: v })}
-                />
-              </div>
-
-              <div>
                 <Label>Kode Pos</Label>
                 <Input
                   size="large"
@@ -330,7 +330,7 @@ export default function CreateUmkm() {
 
               {/* RELATIONS */}
               <div>
-                <Label>Pegawai (Optional)</Label>
+                <Label>Pegawai</Label>
                 <Select
                   size="large"
                   className="w-full"
