@@ -1,12 +1,57 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Badge from "../ui/badge/Badge";
-import { ArrowUpIcon, BoxIconLine, GroupIcon } from "@/icons";
+import { BoxIconLine, GroupIcon } from "@/icons";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
+import { API_DASHBOARD } from "@/lib/apiEndpoint";
+import { ApiResponseSingle } from "@/types/api-response";
+import camelcaseKeys from "camelcase-keys";
+import { message } from "antd";
+
+interface Dashboard {
+  children: {
+    count: number;
+  };
+  childrenAbk: {
+    count: number;
+  };
+  family: {
+    count: number;
+  };
+  umkm: {
+    count: number;
+  };
+}
 
 export const EcommerceMetrics = () => {
+  const [messageApi, contextHolder] = message.useMessage();
+  const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const res = await fetchWithAuth(API_DASHBOARD);
+        if (!res.ok) throw new Error("Failed to fetch dashboard");
+
+        const json: ApiResponseSingle<Dashboard> = await res.json();
+        const dashboard = camelcaseKeys(json.data, { deep: true }) as Dashboard;
+        console.log(dashboard);
+        setDashboardData(dashboard);
+      } catch (error) {
+        console.error("Error fetching dashboard:", error);
+        messageApi.error({
+          content: "Gagal mengambil data.",
+          key: "save",
+          duration: 2,
+        });
+      }
+    };
+    fetchDashboardData();
+  }, [messageApi]);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
       {/* <!-- Metric Item Start --> */}
+      {contextHolder}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <GroupIcon className="text-gray-800 size-6 dark:text-white/90" />
@@ -18,13 +63,9 @@ export const EcommerceMetrics = () => {
               Keluarga
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              3,782
+              {dashboardData?.family.count}
             </h4>
           </div>
-          <Badge color="success">
-            <ArrowUpIcon />
-            11.01%
-          </Badge>
         </div>
       </div>
       {/* <!-- Metric Item End --> */}
@@ -40,11 +81,13 @@ export const EcommerceMetrics = () => {
               Anak
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              5,359
+              {dashboardData?.children.count}
             </h4>
           </div>
 
-          <Badge color="warning">ABK (50)</Badge>
+          <Badge color="warning">
+            ABK ({dashboardData?.childrenAbk.count})
+          </Badge>
         </div>
       </div>
       {/* <!-- Metric Item End --> */}
@@ -60,11 +103,9 @@ export const EcommerceMetrics = () => {
               UMKM
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              5,359
+              {dashboardData?.umkm.count}
             </h4>
           </div>
-
-          <Badge color="warning">ABK (50)</Badge>
         </div>
       </div>
       {/* <!-- Metric Item End --> */}

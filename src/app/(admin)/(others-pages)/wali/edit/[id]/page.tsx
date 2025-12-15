@@ -5,10 +5,19 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
 
-import { Image, Select, Input, message, Flex, Spin } from "antd";
+import {
+  Image,
+  Select,
+  Input,
+  message,
+  Flex,
+  Spin,
+  Popconfirm,
+  Button as AButton,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
-import { API_WALI, API_EMPLOYEES } from "@/lib/apiEndpoint";
+import { API_WALI, API_EMPLOYEES, API_DELETE_PICTURE } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
 import { useEffect, useState } from "react";
@@ -17,6 +26,7 @@ import { Option } from "@/components/form/Select";
 import { Employee } from "@/types/employee";
 import { Wali } from "@/types/wali"; // <= pastikan ini ada
 import { useParams, useRouter } from "next/navigation";
+import { extractKeyFromUrl } from "@/lib/extractKey";
 
 const { TextArea } = Input;
 
@@ -153,6 +163,54 @@ export default function UpdateWali() {
     }
   };
 
+  const handleDeleteWaliPhoto = async () => {
+    if (!form?.waliPict) {
+      messageApi.error("Tidak ada foto untuk dihapus.");
+      return;
+    }
+
+    try {
+      messageApi.loading({
+        content: "Menghapus foto...",
+        key: "delete-wali-photo",
+        duration: 0,
+      });
+
+      const keyObject = extractKeyFromUrl(form.waliPict);
+
+      console.log(keyObject)
+
+      const res = await fetchWithAuth(API_DELETE_PICTURE, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyObject }),
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus foto");
+
+      setForm((prev) => ({
+        ...prev!,
+        partnerPict: null,
+      }));
+      setPhotoFile(null);
+
+      messageApi.success({
+        content: "Foto berhasil dihapus!",
+        key: "delete-wali-photo",
+        duration: 2,
+      });
+
+      handleUpdate();
+    } catch (err) {
+      console.error(err);
+      messageApi.error({
+        content: "Gagal menghapus foto.",
+        key: "delete-wali-photo",
+        duration: 2,
+      });
+    }
+  };
+
   return (
     <div>
       {contextHolder}
@@ -218,17 +276,32 @@ export default function UpdateWali() {
                   }
                 />
               </div>
-              
-              <div>
+
+              <div className="flex flex-col gap-2">
                 <Label>Foto Lama</Label>
+
                 {form.waliPict ? (
-                  <Image
-                    src={form?.waliPict || "/images/user/alt-user.png"}
-                    alt="Preview Foto"
-                    className="object-cover rounded-md max-h-32"
-                  />
+                  <div className="flex items-start gap-3">
+                    <Image
+                      src={form.waliPict || "/images/user/alt-user.png"}
+                      alt="Preview Foto"
+                      className="object-cover rounded-md max-h-32"
+                    />
+
+                    <Popconfirm
+                      title="Hapus Foto?"
+                      description="Foto ini akan dihapus dari server."
+                      onConfirm={handleDeleteWaliPhoto}
+                      okText="Ya, Hapus"
+                      cancelText="Batal"
+                    >
+                      <AButton>Hapus Foto</AButton>
+                    </Popconfirm>
+                  </div>
                 ) : (
-                  "Tidak Ada Foto Lama"
+                  <div className="text-gray-500 italic">
+                    Tidak Ada Foto Lama
+                  </div>
                 )}
               </div>
             </div>

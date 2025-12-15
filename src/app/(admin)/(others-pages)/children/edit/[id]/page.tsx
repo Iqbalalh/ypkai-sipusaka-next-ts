@@ -6,10 +6,24 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
 
-import { Image, Select, Input, message, Flex, Spin, DatePicker } from "antd";
+import {
+  Image,
+  Select,
+  Input,
+  message,
+  Flex,
+  Spin,
+  DatePicker,
+  Popconfirm,
+  Button as AButton,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
-import { API_HOMES, API_CHILDRENS } from "@/lib/apiEndpoint";
+import {
+  API_HOMES,
+  API_CHILDRENS,
+  API_DELETE_PICTURE,
+} from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 import camelcaseKeys from "camelcase-keys";
@@ -18,6 +32,7 @@ import Button from "@/components/ui/button/Button";
 import { Option } from "@/components/form/Select";
 import { useParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { extractKeyFromUrl } from "@/lib/extractKey";
 
 const { TextArea } = Input;
 
@@ -54,7 +69,7 @@ export default function UpdateChildren() {
     childrenGender: "M",
     isCondition: false,
 
-    childrenPict: "",
+    childrenPict: null,
   });
 
   // ==========================
@@ -135,6 +150,53 @@ export default function UpdateChildren() {
       messageApi.error({ content: "Gagal menyimpan perubahan.", key: "save" });
     } finally {
       setSubmitLoading(false);
+    }
+  };
+
+  // Handle Delete
+  const handleDeleteChildrenPhoto = async () => {
+    if (!form.childrenPict) {
+      messageApi.error("Tidak ada foto untuk dihapus.");
+      return;
+    }
+
+    try {
+      messageApi.loading({
+        content: "Menghapus foto...",
+        key: "delete-partner-photo",
+        duration: 0,
+      });
+
+      const keyObject = extractKeyFromUrl(form.childrenPict);
+      console.log(keyObject);
+
+      const res = await fetchWithAuth(API_DELETE_PICTURE, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyObject }),
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus foto");
+
+      setForm((prev) => ({
+        ...prev!,
+        childrenPict: null,
+      }));
+      setPhotoFile(null);
+
+      messageApi.success({
+        content: "Foto berhasil dihapus!",
+        key: "delete-partner-photo",
+        duration: 2,
+      });
+      handleSubmit();
+    } catch (err) {
+      console.error(err);
+      messageApi.error({
+        content: "Gagal menghapus foto.",
+        key: "delete-partner-photo",
+        duration: 2,
+      });
     }
   };
 
@@ -316,14 +378,27 @@ export default function UpdateChildren() {
 
             <div>
               <Label>Foto Lama</Label>
+
               {form.childrenPict ? (
-                <Image
-                  src={form.childrenPict}
-                  alt=""
-                  className="object-cover rounded-md max-h-32"
-                />
+                <div className="flex items-start gap-3">
+                  <Image
+                    src={form.childrenPict || "/images/user/alt-user.png"}
+                    alt="Preview Foto"
+                    className="object-cover rounded-md max-h-32"
+                  />
+
+                  <Popconfirm
+                    title="Hapus Foto?"
+                    description="Foto ini akan dihapus dari server."
+                    onConfirm={handleDeleteChildrenPhoto}
+                    okText="Ya, Hapus"
+                    cancelText="Batal"
+                  >
+                    <AButton>Hapus Foto</AButton>
+                  </Popconfirm>
+                </div>
               ) : (
-                "Tidak Ada Foto"
+                <div className="text-gray-500 italic">Tidak Ada Foto Lama</div>
               )}
             </div>
           </ComponentCard>

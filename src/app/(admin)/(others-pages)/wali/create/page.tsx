@@ -16,13 +16,14 @@ import Button from "@/components/ui/button/Button";
 import { Employee } from "@/types/employee";
 import { Wali } from "@/types/wali";
 import { useRouter } from "next/navigation";
+import { Option } from "@/components/form/Select";
 
 const { TextArea } = Input;
 
 export default function CreateWali() {
   const router = useRouter();
 
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<Option[]>([]);
   const [previewPict, setPreviewPict] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
@@ -174,6 +175,14 @@ export default function CreateWali() {
                 <Select
                   className="w-full"
                   size="large"
+                  showSearch
+                  optionFilterProp="label"
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toString()
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
                   options={employees}
                   value={form.employeeId}
                   onChange={(v) => setForm({ ...form, employeeId: v })}

@@ -27,3 +27,12 @@ export const API_CHILDRENS = `${baseUrl}/api/childrens`;
 
 // UMKM
 export const API_UMKM = `${baseUrl}/api/umkm`;
+
+// Picture
+export const API_DELETE_PICTURE = `${baseUrl}/api/picture/delete`;
+
+// Dashboard
+export const API_DASHBOARD = `${baseUrl}/api/dashboard`
+
+// Staff
+export const API_STAFF = `${baseUrl}/api/staff`;

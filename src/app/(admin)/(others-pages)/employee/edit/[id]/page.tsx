@@ -5,12 +5,25 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
 
-import { Image, message, Input, Select, Flex, Spin } from "antd";
+import {
+  Image,
+  message,
+  Input,
+  Select,
+  Flex,
+  Spin,
+  Popconfirm,
+  Button as AButton,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
 import TextArea from "antd/es/input/TextArea";
 
-import { API_EMPLOYEES, API_REGIONS } from "@/lib/apiEndpoint";
+import {
+  API_DELETE_PICTURE,
+  API_EMPLOYEES,
+  API_REGIONS,
+} from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
 import { useEffect, useState } from "react";
@@ -19,6 +32,7 @@ import { Option } from "@/components/form/Select";
 import { Employee } from "@/types/employee";
 import { Region } from "@/types/region";
 import { useParams, useRouter } from "next/navigation";
+import { extractKeyFromUrl } from "@/lib/extractKey";
 
 export default function UpdateEmployee() {
   const { id } = useParams();
@@ -158,6 +172,59 @@ export default function UpdateEmployee() {
     }
   };
 
+  // Delete Photo
+  const handleDeletePhoto = async () => {
+  if (!form.employeePict) {
+    messageApi.error("Tidak ada foto untuk dihapus.");
+    return;
+  }
+
+  const keyObject = extractKeyFromUrl(form.employeePict);
+  if (!keyObject) {
+    messageApi.error("Gagal memproses URL foto.");
+    return;
+  }
+
+  console.log(keyObject)
+
+  try {
+    messageApi.loading({
+      content: "Menghapus foto...",
+      key: "delete-photo",
+      duration: 0,
+    });
+
+    const res = await fetchWithAuth(API_DELETE_PICTURE, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keyObject }),
+    });
+
+    if (!res.ok) throw new Error("Gagal menghapus foto");
+
+    setForm((prev) => ({
+      ...prev,
+      employeePict: null,
+    }));
+    setPhotoFile(null);
+
+    messageApi.success({
+      content: "Foto berhasil dihapus!",
+      key: "delete-photo",
+      duration: 2,
+    });
+    handleSubmit()
+  } catch (err) {
+    console.error(err);
+    messageApi.error({
+      content: "Gagal menghapus foto.",
+      key: "delete-photo",
+      duration: 2,
+    });
+  }
+};
+
+
   // ============================================================
   // FETCH EMPLOYEE + REGIONS
   // ============================================================
@@ -165,7 +232,7 @@ export default function UpdateEmployee() {
     const loadInitialData = async () => {
       try {
         // 1. Fetch Regions
-        const regRes = await fetchWithAuth(API_REGIONS+"/list");
+        const regRes = await fetchWithAuth(API_REGIONS + "/list");
         const regData = camelcaseKeys((await regRes.json()).data, {
           deep: true,
         });
@@ -293,12 +360,26 @@ export default function UpdateEmployee() {
 
             <div>
               <Label>Foto Lama</Label>
+
               {form.employeePict ? (
-                <Image
-                  src={form?.employeePict || "/images/user/alt-user.png"}
-                  alt="Preview Foto"
-                  className="object-cover rounded-md max-h-32"
-                />
+                <div className="flex flex-col gap-2">
+                  {/* Foto tetap berdiri sendiri */}
+                  <Image
+                    src={form.employeePict}
+                    alt="Preview Foto"
+                    className="object-cover rounded-md max-h-32"
+                  />
+
+                  <Popconfirm
+                    title="Hapus Foto?"
+                    description="Apakah Anda yakin ingin menghapus foto ini?"
+                    okText="Hapus"
+                    cancelText="Batal"
+                    onConfirm={handleDeletePhoto}
+                  >
+                    <AButton>Hapus Foto</AButton>
+                  </Popconfirm>
+                </div>
               ) : (
                 "Tidak Ada Foto Lama"
               )}

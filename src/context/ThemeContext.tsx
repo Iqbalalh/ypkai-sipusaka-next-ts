@@ -28,19 +28,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("theme", theme);
+    if (!isInitialized) return;
 
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }
+    localStorage.setItem("theme", theme);
+
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme, isInitialized]);
 
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   return (
@@ -51,6 +47,35 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
             theme === "dark"
               ? antdTheme.darkAlgorithm
               : antdTheme.defaultAlgorithm,
+
+          token: {
+            // 🎨 Brand Color
+            colorPrimary: "#1677FF",          // brand-400
+            colorPrimaryHover: "#4096FF",     // brand-300
+            colorPrimaryActive: "#0958D9",    // brand-500
+            colorPrimaryBg: "#BAE0FF",        // brand-50
+            colorPrimaryBgHover: "#E6F4FF",   // brand-25
+            colorPrimaryBorder: "#003EB3",    // brand-600
+            colorPrimaryBorderHover: "#002C8C", // brand-700
+
+            // 🧩 UI Consistency
+            borderRadius: 8,
+            fontFamily: "var(--font-outfit)",
+          },
+
+          components: {
+            Button: {
+              borderRadius: 8,
+              fontWeight: 500,
+            },
+            Input: {
+              borderRadius: 8,
+            },
+            Table: {
+              headerBg: theme === "dark" ? "#001D66" : "#E6F4FF",
+              headerColor: theme === "dark" ? "#E6F4FF" : "#002C8C",
+            },
+          },
         }}
       >
         {children}
@@ -61,7 +86,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;

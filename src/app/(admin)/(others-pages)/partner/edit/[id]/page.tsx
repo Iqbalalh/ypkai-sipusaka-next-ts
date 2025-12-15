@@ -5,7 +5,16 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
 
-import { Image, Select, Input, message, Flex, Spin } from "antd";
+import {
+  Image,
+  Select,
+  Input,
+  message,
+  Flex,
+  Spin,
+  Popconfirm,
+  Button as AButton,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
 import {
@@ -13,6 +22,7 @@ import {
   API_REGIONS,
   API_EMPLOYEES,
   API_SUBDISTRICTS,
+  API_DELETE_PICTURE,
 } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
@@ -24,6 +34,7 @@ import { Region } from "@/types/region";
 import { Subdistricts } from "@/types/subdistrict";
 import { Partner } from "@/types/partner";
 import { useParams, useRouter } from "next/navigation";
+import { extractKeyFromUrl } from "@/lib/extractKey";
 
 const { TextArea } = Input;
 
@@ -82,9 +93,9 @@ export default function UpdatePartner() {
     const loadAll = async () => {
       try {
         const [regRes, empRes, subdRes, parRes] = await Promise.all([
-          fetchWithAuth(API_REGIONS+"/list"),
+          fetchWithAuth(API_REGIONS + "/list"),
           fetchWithAuth(`${API_EMPLOYEES}/list`),
-          fetchWithAuth(API_SUBDISTRICTS+"/list"),
+          fetchWithAuth(API_SUBDISTRICTS + "/list"),
           fetchWithAuth(`${API_PARTNERS}/${partnerId}`),
         ]);
 
@@ -150,6 +161,53 @@ export default function UpdatePartner() {
         Loading...
       </div>
     );
+
+  // Handle Delete
+  const handleDeletePartnerPhoto = async () => {
+    if (!form.partnerPict) {
+      messageApi.error("Tidak ada foto untuk dihapus.");
+      return;
+    }
+
+    try {
+      messageApi.loading({
+        content: "Menghapus foto...",
+        key: "delete-partner-photo",
+        duration: 0,
+      });
+
+      const keyObject = extractKeyFromUrl(form.partnerPict);
+      console.log(keyObject);
+
+      const res = await fetchWithAuth(API_DELETE_PICTURE, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyObject }),
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus foto");
+
+      setForm((prev) => ({
+        ...prev!,
+        partnerPict: null,
+      }));
+      setPhotoFile(null);
+
+      messageApi.success({
+        content: "Foto berhasil dihapus!",
+        key: "delete-partner-photo",
+        duration: 2,
+      });
+      handleUpdate()
+    } catch (err) {
+      console.error(err);
+      messageApi.error({
+        content: "Gagal menghapus foto.",
+        key: "delete-partner-photo",
+        duration: 2,
+      });
+    }
+  };
 
   // ============================
   // SUBMIT UPDATE
@@ -304,16 +362,29 @@ export default function UpdatePartner() {
                 />
               </div>
             </div>
-            <div>
+            <div className="flex flex-col gap-2">
               <Label>Foto Lama</Label>
+
               {form.partnerPict ? (
-                <Image
-                  src={form?.partnerPict || "/images/user/alt-user.png"}
-                  alt="Preview Foto"
-                  className="object-cover rounded-md max-h-32"
-                />
+                <div className="flex items-start gap-3">
+                  <Image
+                    src={form.partnerPict || "/images/user/alt-user.png"}
+                    alt="Preview Foto"
+                    className="object-cover rounded-md max-h-32"
+                  />
+
+                  <Popconfirm
+                    title="Hapus Foto?"
+                    description="Foto ini akan dihapus dari server."
+                    onConfirm={handleDeletePartnerPhoto}
+                    okText="Ya, Hapus"
+                    cancelText="Batal"
+                  >
+                    <AButton>Hapus Foto</AButton>
+                  </Popconfirm>
+                </div>
               ) : (
-                "Tidak Ada Foto Lama"
+                <div className="text-gray-500 italic">Tidak Ada Foto Lama</div>
               )}
             </div>
           </ComponentCard>
