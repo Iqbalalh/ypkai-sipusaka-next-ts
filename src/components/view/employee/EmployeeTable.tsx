@@ -36,18 +36,18 @@ import type { ColumnsType } from "antd/es/table";
 import { Employee } from "@/types/employee";
 import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
+import { exportTableToExcel } from "@/lib/exportTableToExcel";
 
-export default function EmployeeTable({
-  onCountChange,
-}: {
-  onCountChange?: (count: number) => void;
-}) {
+export default function EmployeeTable() {
   // ==========================
   // STATE
   // ==========================
   const [data, setData] = useState<Employee[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
+  const [currentData, setCurrentData] = useState<Employee[]>([]);
+
   const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
 
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
@@ -93,19 +93,32 @@ export default function EmployeeTable({
       }) as Employee[];
 
       setData(employees);
-      onCountChange?.(employees.length);
+      setCount(employees.length);
     } catch (err) {
       console.error(err);
       messageApi.error("Gagal mengambil data pegawai");
     } finally {
       setLoading(false);
     }
-  }, [onCountChange, messageApi]);
+  }, [messageApi]);
 
   useEffect(() => {
     fetchRegions();
     fetchEmployees();
   }, [fetchEmployees, fetchRegions]);
+
+  useEffect(() => {
+    setCurrentData(data);
+  }, [data]);
+
+  const handleExportExcel = () => {
+    exportTableToExcel<Employee>({
+      data: currentData.length ? currentData : data,
+      columns,
+      filename: "data-pegawai",
+      sheetName: "Pegawai",
+    });
+  };
 
   // ==========================
   // DELETE HANDLER
@@ -224,7 +237,9 @@ export default function EmployeeTable({
       dataIndex: "id",
       key: "id",
       render: (text) => text || "-",
+      exportRender: (value: number) => value ?? "-",
     },
+
     {
       title: "Foto",
       dataIndex: "employeePict",
@@ -239,34 +254,41 @@ export default function EmployeeTable({
             className="rounded-full object-cover w-10 h-10"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-            <Image
-              src={"/images/user/alt-user.png"}
-              alt={"N/A"}
-              width={40}
-              height={40}
-            />
-          </div>
+          <Image
+            src="/images/user/alt-user.png"
+            alt="N/A"
+            width={40}
+            height={40}
+          />
         ),
+      exportRender: (_: any, emp: Employee) =>
+        emp.employeePict ? emp.employeePict : "-",
     },
+
     {
       title: "Nama Pegawai",
       dataIndex: "employeeName",
       key: "employeeName",
       ...getColumnSearchProps("employeeName"),
+      exportRender: (value: string) => value ?? "-",
     },
+
     {
       title: "NIP/NIPP",
       dataIndex: "nipNipp",
       key: "nipNipp",
       ...getColumnSearchProps("nipNipp"),
+      exportRender: (value: string) => value ?? "-",
     },
+
     {
       title: "Jabatan Terakhir",
       dataIndex: "lastPosition",
       key: "lastPosition",
       render: (text) => text || "-",
+      exportRender: (value: string) => value ?? "-",
     },
+
     {
       title: "Wilayah",
       dataIndex: "regionId",
@@ -280,7 +302,12 @@ export default function EmployeeTable({
         const region = regions.find((r) => r.regionId === emp.regionId);
         return region ? region.regionName : "-";
       },
+      exportRender: (_: any, emp: Employee) => {
+        const region = regions.find((r) => r.regionId === emp.regionId);
+        return region?.regionName ?? "-";
+      },
     },
+
     {
       title: "Jenis Kelamin",
       dataIndex: "employeeGender",
@@ -292,7 +319,10 @@ export default function EmployeeTable({
       onFilter: (value, record) => record.employeeGender === value,
       render: (gender: "M" | "F") =>
         gender === "M" ? "Laki-laki" : "Perempuan",
+      exportRender: (value: "M" | "F") =>
+        value === "M" ? "Laki-laki" : "Perempuan",
     },
+
     {
       title: "PLH/Non-PLH",
       dataIndex: "isAccident",
@@ -307,32 +337,43 @@ export default function EmployeeTable({
           {isAccident ? "PLH" : "Non-PLH"}
         </Badge>
       ),
+      exportRender: (value: boolean) => (value ? "PLH" : "Non-PLH"),
     },
+
     {
       title: "Penyebab Wafat",
       dataIndex: "deathCause",
       key: "deathCause",
       render: (text) => text || "-",
+      exportRender: (value: string) => value ?? "-",
     },
+
     {
       title: "Keterangan",
       dataIndex: "notes",
       key: "notes",
       render: (text) => text || "-",
+      exportRender: (value: string) => value ?? "-",
     },
+
     {
       title: "Dibuat Pada",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (text) =>
         text ? new Date(text).toLocaleDateString("id-ID") : "-",
+      exportRender: (value: string) =>
+        value ? new Date(value).toLocaleDateString("id-ID") : "-",
     },
+
     {
       title: "Diperbarui Pada",
       dataIndex: "updatedAt",
       key: "updatedAt",
       render: (text) =>
         text ? new Date(text).toLocaleDateString("id-ID") : "-",
+      exportRender: (value: string) =>
+        value ? new Date(value).toLocaleDateString("id-ID") : "-",
     },
     {
       title: "Aksi",
@@ -399,6 +440,28 @@ export default function EmployeeTable({
         <p>Apakah Anda yakin ingin menghapus pegawai ini?</p>
       </Modal>
 
+      <div className="flex justify-between items-center gap-4 mb-8">
+        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+          Jumlah Data: {count}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+
+          <Link href={"/employee/create"}>
+            <Button
+              onClick={() => setLoading(true)}
+              disabled={loading}
+              size="sm"
+            >
+              +
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       <Table
         columns={columns}
         dataSource={data}
@@ -406,9 +469,10 @@ export default function EmployeeTable({
         bordered
         pagination={{ pageSize: 50, showSizeChanger: false }}
         scroll={{ x: "max-content", y: 500 }}
-        onChange={(pagination, filters, sorter, extra) =>
-          onCountChange?.(extra.currentDataSource.length)
-        }
+        onChange={(pagination, filters, sorter, extra) => {
+          setCurrentData(extra.currentDataSource as Employee[]);
+          setCount(extra.currentDataSource.length);
+        }}
       />
     </div>
   );

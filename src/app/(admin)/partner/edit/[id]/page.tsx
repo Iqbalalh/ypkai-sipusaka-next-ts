@@ -177,7 +177,6 @@ export default function UpdatePartner() {
       });
 
       const keyObject = extractKeyFromUrl(form.partnerPict);
-      console.log(keyObject);
 
       const res = await fetchWithAuth(API_DELETE_PICTURE, {
         method: "PATCH",

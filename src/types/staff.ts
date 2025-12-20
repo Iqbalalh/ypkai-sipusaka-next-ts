@@ -10,4 +10,6 @@ export interface Staff {
   nik?: string | null;
   roleId?: number | null;
   staffPict?: string | null;
+
+  roleName?: string | null;
 }

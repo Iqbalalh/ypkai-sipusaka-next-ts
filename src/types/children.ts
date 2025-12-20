@@ -17,6 +17,8 @@ export interface Children {
   createdAt?: string | null; // Timestamp ISO
   updatedAt?: string | null; // Timestamp ISO
   index?: number | null;
+  nik?: string | null;
+  childrenJob?: string | null;
 
   // Non-native
   childrenPictFile?: File | null;

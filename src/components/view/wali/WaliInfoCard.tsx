@@ -3,15 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_WALI } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Button from "@/components/ui/button/Button";
-import camelcaseKeys from "camelcase-keys";
-import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import { Wali } from "@/types/wali";
 import Link from "next/link";
+import { fetchDataInfo } from "@/lib/fetchDataInfo";
 
 export default function WaliInfoCard() {
   const [data, setData] = useState<Wali | null>(null);
@@ -21,23 +19,19 @@ export default function WaliInfoCard() {
 
   useEffect(() => {
     const fetchHomes = async () => {
-      try {
-        if (!id) return;
-        const res = await fetchWithAuth(`${API_WALI}/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch wali details");
-        const wali: ApiResponseSingle<Wali> = await res.json();
-        const waliData = camelcaseKeys(wali.data, { deep: true }) as Wali;
-        setData(waliData);
-      } catch (error) {
-        console.error("Error fetching wali details:", error);
-        messageApi.error({
-          content: "Gagal mengambil data wali.",
-          key: "save",
-          duration: 2,
-        });
-      } finally {
-        setLoading(false);
-      }
+      if (!id) return;
+      fetchDataInfo<Wali>({
+        url: `${API_WALI}/${id}`,
+        onSuccess: setData,
+        setLoading,
+        errorMessage: "Gagal mengambil data.",
+        onErrorPopup: (msg: string) =>
+          messageApi.error({
+            content: msg,
+            key: "fetch",
+            duration: 2,
+          }),
+      });
     };
 
     fetchHomes();
@@ -90,7 +84,9 @@ export default function WaliInfoCard() {
           {/* ====== Detail Info Wali ====== */}
           <div className="mt-6">
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+              <InfoItem label="NIK" value={data?.nik || "-"} />
               <InfoItem label="Nomor Telp" value={data?.waliPhone || "-"} />
+              <InfoItem label="Pekerjaan" value={data?.waliJob || "-"} />
               <InfoItem label="Hubungan" value={data?.relation || "-"} />
               <InfoItem label="Alamat" value={data?.waliAddress} />
               <InfoItem

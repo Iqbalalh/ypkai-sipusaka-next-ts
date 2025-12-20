@@ -4,14 +4,12 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_UMKM } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
-import camelcaseKeys from "camelcase-keys";
-import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Umkm } from "@/types/umkm";
+import { fetchDataInfo } from "@/lib/fetchDataInfo";
 
 export default function UmkmInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -21,24 +19,19 @@ export default function UmkmInfoCard() {
 
   useEffect(() => {
     const fetchUmkm = async () => {
-      try {
-        if (!id) return;
-        const res = await fetchWithAuth(`${API_UMKM}/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch UMKM details");
-
-        const json: ApiResponseSingle<Umkm> = await res.json();
-        const umkmData = camelcaseKeys(json.data, { deep: true }) as Umkm;
-        setData(umkmData);
-      } catch (error) {
-        console.error("Error fetching UMKM details:", error);
-        messageApi.error({
-          content: "Gagal mengambil data UMKM.",
-          key: "save",
-          duration: 2,
-        });
-      } finally {
-        setLoading(false);
-      }
+      if (!id) return;
+      fetchDataInfo<Umkm>({
+        url: `${API_UMKM}/${id}`,
+        onSuccess: setData,
+        setLoading,
+        errorMessage: "Gagal mengambil data.",
+        onErrorPopup: (msg: string) =>
+          messageApi.error({
+            content: msg,
+            key: "fetch",
+            duration: 2,
+          }),
+      });
     };
 
     fetchUmkm();
@@ -65,13 +58,13 @@ export default function UmkmInfoCard() {
             {/* Name */}
             <div>
               <div className="w-full flex overflow-hidden">
-              <Image
-                width={500}
-                height={200}
-                src={data?.umkmPict || "/images/user/alt-user.png"}
-                alt="UMKM"
-              />
-            </div>
+                <Image
+                  width={500}
+                  height={200}
+                  src={data?.umkmPict || "/images/user/alt-user.png"}
+                  alt="UMKM"
+                />
+              </div>
             </div>
 
             {/* Edit Button */}

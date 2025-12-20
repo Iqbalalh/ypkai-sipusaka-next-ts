@@ -9,6 +9,8 @@ export interface Wali {
   createdAt?: string; // ISO timestamp
   updatedAt?: string;
   waliPict?: string | null;
+  nik?: string | null;
+  waliJob?: string | null;
 
   waliPictFile?: File | null;
 }

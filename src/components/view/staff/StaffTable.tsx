@@ -223,8 +223,8 @@ export default function StaffTable({
     },
     {
       title: "Jabatan",
-      dataIndex: "roleId",
-      ...getColumnSearchProps("staffName"),
+      dataIndex: "roleName",
+      ...getColumnSearchProps("roleName"),
     },
     {
       title: "NIK",

@@ -7,7 +7,10 @@ interface LoginResponse {
   user: {
     id: string;
     username: string;
-    [key: string]: any;
+    email?: string;
+    staff_name?: string;
+    role_name?: string;
+    staff_pict?: string;
   };
   token: string;
   message?: string;
@@ -35,17 +38,18 @@ const authOptions: NextAuthOptions = {
           });
 
           const data: LoginResponse = await res.json();
+          if (!res.ok) return null;
 
-          if (!res.ok) {
-            // Catat error di server log (opsional)
-            console.error(
-              "Authentication failed:",
-              data.message || "Invalid credentials"
-            );
-            return null;
-          }
-
-          return { ...data.user, token: data.token };
+          // 🔑 MAPPING SEKALI DI SINI
+          return {
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email,
+            staffName: data.user.staff_name,
+            roleName: data.user.role_name,
+            staffPict: data.user.staff_pict,
+            token: data.token,
+          };
         } catch (error) {
           console.error("Network or Fetch Error during login:", error);
           return null;
@@ -62,14 +66,23 @@ const authOptions: NextAuthOptions = {
         token.accessToken = (user as any).token;
         token.id = (user as any).id;
         token.username = (user as any).username;
+        token.email = (user as any).email;
+        token.staffName = (user as any).staffName;
+        token.roleName = (user as any).roleName;
+        token.staffPict = (user as any).staffPict;
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).token = token.accessToken;
-        (session.user as any).id = token.id;
-        (session.user as any).username = token.username;
+        session.user.id = token.id as string;
+        session.user.username = token.username as string;
+        session.user.email = token.email as string;
+        session.user.staffName = token.staffName as string;
+        session.user.roleName = token.roleName as string;
+        session.user.staffPict = token.staffPict as string;
+        session.user.token = token.accessToken as string;
       }
       return session;
     },

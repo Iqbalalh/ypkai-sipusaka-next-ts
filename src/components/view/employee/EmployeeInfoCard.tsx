@@ -4,15 +4,13 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_EMPLOYEES } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
-import camelcaseKeys from "camelcase-keys";
-import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Employee } from "@/types/employee";
+import { fetchDataInfo } from "@/lib/fetchDataInfo";
 
 export default function EmployeeInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -22,25 +20,19 @@ export default function EmployeeInfoCard() {
 
   useEffect(() => {
     const fetchHomes = async () => {
-      try {
-        if (!id) return;
-        const res = await fetchWithAuth(`${API_EMPLOYEES}/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch home details");
-        const home: ApiResponseSingle<Employee> = await res.json();
-        const employeeData = camelcaseKeys(home.data, {
-          deep: true,
-        }) as Employee;
-        setData(employeeData);
-      } catch (error) {
-        console.error("Error fetching home details:", error);
-        messageApi.error({
-          content: "Gagal mengambil data pegawai.",
-          key: "save",
-          duration: 2,
-        });
-      } finally {
-        setLoading(false);
-      }
+      if (!id) return;
+      fetchDataInfo<Employee>({
+        url: `${API_EMPLOYEES}/${id}`,
+        onSuccess: setData,
+        setLoading,
+        errorMessage: "Gagal mengambil data.",
+        onErrorPopup: (msg: string) =>
+          messageApi.error({
+            content: msg,
+            key: "fetch",
+            duration: 2,
+          }),
+      });
     };
 
     fetchHomes();

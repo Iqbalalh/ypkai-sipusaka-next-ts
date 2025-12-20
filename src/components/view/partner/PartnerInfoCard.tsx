@@ -4,15 +4,13 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { API_PARTNERS } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
-import camelcaseKeys from "camelcase-keys";
-import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Partner } from "@/types/partner";
+import { fetchDataInfo } from "@/lib/fetchDataInfo";
 
 export default function PartnerInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -22,23 +20,19 @@ export default function PartnerInfoCard() {
 
   useEffect(() => {
     const fetchPartner = async () => {
-      try {
-        if (!id) return;
-        const res = await fetchWithAuth(`${API_PARTNERS}/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch partner details");
-        const partner: ApiResponseSingle<Partner> = await res.json();
-        const partnerData = camelcaseKeys(partner.data, { deep: true }) as Partner;
-        setData(partnerData);
-      } catch (error) {
-        console.error("Error fetching partner details:", error);
-        messageApi.error({
-          content: "Gagal mengambil data pasangan.",
-          key: "save",
-          duration: 2,
-        });
-      } finally {
-        setLoading(false);
-      }
+      if (!id) return;
+      fetchDataInfo<Partner>({
+        url: `${API_PARTNERS}/${id}`,
+        onSuccess: setData,
+        setLoading,
+        errorMessage: "Gagal mengambil data.",
+        onErrorPopup: (msg: string) =>
+          messageApi.error({
+            content: msg,
+            key: "fetch",
+            duration: 2,
+          }),
+      });
     };
 
     fetchPartner();
@@ -57,7 +51,6 @@ export default function PartnerInfoCard() {
       {contextHolder}
       {/* Partner */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
-        <div>{data?.isUmkm ? <Badge color="info">UMKM</Badge> : ""}</div>
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
             <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
@@ -70,9 +63,12 @@ export default function PartnerInfoCard() {
             </div>
 
             <div>
-              <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
+              <h4 className="mb-2 text-lg flex items-center font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
                 {data?.isAlive == false ? "Alm. " : ""}
-                {data?.partnerName}
+                {data?.partnerName}{" "}
+                <div className="m-4">
+                  {data?.isUmkm ? <Badge color="info">UMKM</Badge> : ""}
+                </div>
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-md text-gray-500 dark:text-gray-400">

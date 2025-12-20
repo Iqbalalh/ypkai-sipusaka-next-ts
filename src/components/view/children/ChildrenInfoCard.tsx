@@ -118,6 +118,8 @@ export default function ChildrenInfoCard() {
                 label="Tanggal Lahir"
                 value={data?.childrenBirthdate || "-"}
               />
+              <InfoItem label="NIK" value={data?.nik || "-"} />
+              <InfoItem label="Pekerjaan" value={data?.childrenJob || "-"} />
               <InfoItem label="Alamat" value={data?.childrenAddress || "-"} />
               <InfoItem label="Nomor Telp" value={data?.childrenPhone || "-"} />
               <InfoItem

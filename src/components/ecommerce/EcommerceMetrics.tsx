@@ -35,7 +35,6 @@ export const EcommerceMetrics = () => {
 
         const json: ApiResponseSingle<Dashboard> = await res.json();
         const dashboard = camelcaseKeys(json.data, { deep: true }) as Dashboard;
-        console.log(dashboard);
         setDashboardData(dashboard);
       } catch (error) {
         console.error("Error fetching dashboard:", error);

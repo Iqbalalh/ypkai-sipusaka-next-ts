@@ -2,11 +2,11 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-// Import fungsi signOut dari next-auth/react
-import { signOut } from "next-auth/react"; 
+import { signOut, useSession } from "next-auth/react"; 
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const { data } = useSession();
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -17,11 +17,8 @@ export default function UserDropdown() {
     setIsOpen(false);
   }
 
-  // Fungsi untuk menangani Sign Out
   const handleSignOut = () => {
-    closeDropdown(); // Tutup dropdown
-    // Panggil signOut. Anda dapat menambahkan opsi redirect di sini, 
-    // misalnya: signOut({ callbackUrl: '/' })
+    closeDropdown();
     signOut(); 
   };
 
@@ -35,12 +32,12 @@ export default function UserDropdown() {
           <Image
             width={44}
             height={44}
-            src="/images/user/owner.jpg"
+            src={data?.user?.staffPict || "/images/user/alt-user.png"}
             alt="User"
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Zahra</span>
+        <span className="block mr-1 font-medium text-theme-sm">{data?.user?.username}</span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -69,10 +66,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Azzahra Adelia
+            {data?.user?.staffName}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            it@yayasanpusakakai.org
+            {data?.user?.email}
           </span>
         </div>
 

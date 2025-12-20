@@ -178,8 +178,6 @@ export default function UpdateWali() {
 
       const keyObject = extractKeyFromUrl(form.waliPict);
 
-      console.log(keyObject)
-
       const res = await fetchWithAuth(API_DELETE_PICTURE, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -239,6 +237,28 @@ export default function UpdateWali() {
                   value={form.waliName}
                   onChange={(e) =>
                     setForm({ ...form, waliName: e.target.value })
+                  }
+                />
+              </div>
+              
+              <div>
+                <Label>NIK</Label>
+                <Input
+                  size="large"
+                  value={form.nik ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, nik: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Pekerjaan</Label>
+                <Input
+                  size="large"
+                  value={form.waliJob ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, waliJob: e.target.value })
                   }
                 />
               </div>

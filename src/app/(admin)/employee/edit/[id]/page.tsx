@@ -185,8 +185,6 @@ export default function UpdateEmployee() {
     return;
   }
 
-  console.log(keyObject)
-
   try {
     messageApi.loading({
       content: "Menghapus foto...",

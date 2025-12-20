@@ -39,6 +39,8 @@ export default function CreateWali() {
     waliAddress: "",
     addressCoordinate: "",
     waliPhone: "",
+    nik: "",
+    waliJob: "",
   });
 
   // VALIDASI FILE
@@ -196,6 +198,28 @@ export default function CreateWali() {
                   value={form.waliName}
                   onChange={(e) =>
                     setForm({ ...form, waliName: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>NIK</Label>
+                <Input
+                  size="large"
+                  value={form.nik ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, nik: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Pekerjaan</Label>
+                <Input
+                  size="large"
+                  value={form.waliJob ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, waliJob: e.target.value })
                   }
                 />
               </div>

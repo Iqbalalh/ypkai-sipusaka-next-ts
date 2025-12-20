@@ -1,38 +1,43 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import FileInput from "@/components/form/input/FileInput";
-import Button from "@/components/ui/button/Button";
-import { Option } from "@/components/form/Select";
 
-import { Image, Select, Input, message, Flex, Spin, DatePicker } from "antd";
+import {
+  Image,
+  Select,
+  Input,
+  message,
+  Flex,
+  Spin,
+  DatePicker,
+  Popconfirm,
+  Button as AButton,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
-import { API_HOMES, API_CHILDRENS } from "@/lib/apiEndpoint";
+import {
+  API_HOMES,
+  API_CHILDRENS,
+  API_DELETE_PICTURE,
+} from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
+
 import camelcaseKeys from "camelcase-keys";
+import { useEffect, useState } from "react";
+import Button from "@/components/ui/button/Button";
+import { Option } from "@/components/form/Select";
+import { useParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { extractKeyFromUrl } from "@/lib/extractKey";
 
 const { TextArea } = Input;
 
-// ----------------------------
-// Helpers
-// ----------------------------
-const toSnake = (str: string) =>
-  str.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
-
-const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
-
-// ----------------------------
-// Component
-// ----------------------------
-export default function CreateChildren() {
+export default function UpdateChildren() {
+  const { id } = useParams();
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -43,33 +48,43 @@ export default function CreateChildren() {
   const [previewPict, setPreviewPict] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
+  // ==========================
+  // FORM STATE (with nullable values)
+  // ==========================
   const [form, setForm] = useState({
     employeeId: null,
     partnerId: null,
     homeId: null,
+
     childrenName: "",
-    childrenBirthdate: "",
+    childrenBirthdate: null as string | null,
     childrenAddress: "",
     childrenPhone: "",
     notes: "",
+    index: null as number | null,
+    nik: null as string | null,
+    childrenJob: null as string | null,
+
     isActive: true,
     isFatherAlive: true,
     isMotherAlive: true,
     childrenGender: "M",
     isCondition: false,
-    index: 0,
+
+    childrenPict: null,
   });
 
-  // ----------------------------
-  // File validation
-  // ----------------------------
+  // ==========================
+  // VALIDASI FOTO
+  // ==========================
   const validateFile = (file: File) => {
-    if (!allowedImageTypes.includes(file.type)) {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
       messageApi.error("Format foto tidak valid.");
       return false;
     }
     if (file.size > 1 * 1024 * 1024) {
-      messageApi.error("Maksimal ukuran foto 1MB.");
+      messageApi.error("Maksimum ukuran foto 1MB.");
       return false;
     }
     return true;
@@ -77,24 +92,33 @@ export default function CreateChildren() {
 
   const handleSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !validateFile(file)) return;
+    if (!file) return;
+    if (!validateFile(file)) return;
 
     setPhotoFile(file);
     setPreviewPict(URL.createObjectURL(file));
   };
 
-  // ----------------------------
-  // Submit
-  // ----------------------------
-  const handleSubmit = async () => {
-    if (!form.childrenName.trim())
-      return messageApi.error("Nama anak wajib diisi.");
+  const toSnake = (str: string) =>
+    str.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
 
-    if (!form.homeId) return messageApi.error("Keluarga wajib dipilih.");
+  // ==========================
+  // SUBMIT PATCH
+  // ==========================
+  const handleSubmit = async () => {
+    if (!form.childrenName.trim()) {
+      messageApi.error("Nama anak wajib diisi.");
+      return;
+    }
+
+    if (!form.homeId) {
+      messageApi.error("Keluarga wajib dipilih.");
+      return;
+    }
 
     setSubmitLoading(true);
     messageApi.loading({
-      content: "Menyimpan data anak...",
+      content: "Menyimpan perubahan...",
       key: "save",
       duration: 0,
     });
@@ -103,43 +127,87 @@ export default function CreateChildren() {
       const fd = new FormData();
 
       Object.entries(form).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          fd.append(toSnake(key), String(value));
-        }
+        if (value === undefined) return;
+
+        // kirim null sebagai string "null"
+        fd.append(toSnake(key), value === null ? "null" : String(value));
       });
 
       if (photoFile) fd.append("photo", photoFile);
 
-      const res = await fetchWithAuth(API_CHILDRENS, {
-        method: "POST",
+      const res = await fetchWithAuth(`${API_CHILDRENS}/${id}`, {
+        method: "PATCH",
         body: fd,
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error("Gagal update data anak");
 
       messageApi.success({
-        content: "Data anak berhasil dibuat!",
+        content: "Data anak berhasil diperbarui!",
         key: "save",
       });
-
-      router.push("/children");
-    } catch (err) {
-      console.error(err);
-      messageApi.error({
-        content: "Gagal menyimpan data anak.",
-        key: "save",
-      });
+      router.back();
+    } catch (e) {
+      console.error(e);
+      messageApi.error({ content: "Gagal menyimpan perubahan.", key: "save" });
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // ----------------------------
-  // Fetch Data (homes)
-  // ----------------------------
+  // Handle Delete
+  const handleDeleteChildrenPhoto = async () => {
+    if (!form.childrenPict) {
+      messageApi.error("Tidak ada foto untuk dihapus.");
+      return;
+    }
+
+    try {
+      messageApi.loading({
+        content: "Menghapus foto...",
+        key: "delete-partner-photo",
+        duration: 0,
+      });
+
+      const keyObject = extractKeyFromUrl(form.childrenPict);
+
+      const res = await fetchWithAuth(API_DELETE_PICTURE, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyObject }),
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus foto");
+
+      setForm((prev) => ({
+        ...prev!,
+        childrenPict: null,
+      }));
+      setPhotoFile(null);
+
+      messageApi.success({
+        content: "Foto berhasil dihapus!",
+        key: "delete-partner-photo",
+        duration: 2,
+      });
+      handleSubmit();
+    } catch (err) {
+      console.error(err);
+      messageApi.error({
+        content: "Gagal menghapus foto.",
+        key: "delete-partner-photo",
+        duration: 2,
+      });
+    }
+  };
+
+  // ==========================
+  // FETCH INITIAL DATA
+  // ==========================
   useEffect(() => {
     const loadData = async () => {
       try {
+        // FETCH homes
         const homeRes = await fetchWithAuth(`${API_HOMES}/list`);
         const homeData = camelcaseKeys((await homeRes.json()).data);
 
@@ -151,17 +219,49 @@ export default function CreateChildren() {
             employeeId: h.employeeId,
           }))
         );
-      } finally {
+
+        // FETCH children
+        const childRes = await fetchWithAuth(`${API_CHILDRENS}/${id}`);
+        const childData = camelcaseKeys((await childRes.json()).data, {
+          deep: true,
+        });
+
+        setForm({
+          employeeId: childData.employeeId,
+          partnerId: childData.partnerId,
+          homeId: childData.homeId,
+
+          childrenName: childData.childrenName ?? "",
+          childrenBirthdate: childData.childrenBirthdate ?? null,
+          childrenAddress: childData.childrenAddress ?? "",
+          childrenPhone: childData.childrenPhone ?? "",
+          notes: childData.notes ?? "",
+          index: childData.index ?? null,
+          nik: childData.nik ?? null,
+          childrenJob: childData.childrenJob ?? null,
+
+          isActive: childData.isActive === true,
+          isFatherAlive: childData.isFatherAlive === true,
+          isMotherAlive: childData.isMotherAlive === true,
+          childrenGender: childData.childrenGender ?? "M",
+          isCondition: childData.isCondition === true,
+
+          childrenPict: childData.childrenPict ?? "",
+        });
+
+        if (childData.photoUrl) setPreviewPict(childData.photoUrl);
+
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        messageApi.error("Gagal memuat data.");
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [id, messageApi]);
 
-  // ----------------------------
-  // Loading Screen
-  // ----------------------------
   if (loading)
     return (
       <div className="flex gap-2">
@@ -172,20 +272,19 @@ export default function CreateChildren() {
       </div>
     );
 
-  // ----------------------------
-  // JSX
-  // ----------------------------
+  // ========================
+  // RENDER FORM
+  // ========================
   return (
     <div>
       {contextHolder}
-      <PageBreadcrumb pageTitle="Tambah Data Anak" />
+      <PageBreadcrumb pageTitle="Form Sunting Data Anak" />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {/* LEFT */}
         <div className="space-y-6">
-          <ComponentCard title="Isi Data Anak">
+          <ComponentCard title="Ubah Data Anak">
             <div className="space-y-6">
-              {/* Nama Anak */}
               <div>
                 <Label>Nama Anak *</Label>
                 <Input
@@ -197,7 +296,6 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Tanggal Lahir */}
               <div>
                 <Label>Tanggal Lahir</Label>
                 <DatePicker
@@ -208,57 +306,75 @@ export default function CreateChildren() {
                       ? dayjs(form.childrenBirthdate)
                       : null
                   }
-                  onChange={(date) =>
+                  onChange={(d) =>
                     setForm({
                       ...form,
-                      childrenBirthdate: date ? date.format("YYYY-MM-DD") : "",
+                      childrenBirthdate: d ? d.format("YYYY-MM-DD") : null,
                     })
                   }
                 />
               </div>
 
-              {/* Alamat */}
               <div>
-                <Label>Alamat</Label>
-                <TextArea
-                  size="large"
-                  rows={3}
-                  value={form.childrenAddress}
-                  onChange={(e) =>
-                    setForm({ ...form, childrenAddress: e.target.value })
-                  }
-                />
-              </div>
-
-              {/* Nomor Telepon */}
-              <div>
-                <Label>No. Telepon</Label>
+                <Label>No Telepon</Label>
                 <Input
                   size="large"
-                  value={form.childrenPhone}
+                  type="number"
+                  value={form.childrenPhone ?? ""}
                   onChange={(e) =>
                     setForm({ ...form, childrenPhone: e.target.value })
                   }
                 />
               </div>
 
-              {/* Anak Ke- */}
+              <div>
+                <Label>NIK</Label>
+                <Input
+                  size="large"
+                  type="number"
+                  value={form.nik ?? ""}
+                  onChange={(e) => setForm({ ...form, nik: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Pekerjaan</Label>
+                <Input
+                  size="large"
+                  value={form.childrenJob ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, childrenJob: e.target.value })
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Alamat</Label>
+                <TextArea
+                  rows={3}
+                  size="large"
+                  value={form.childrenAddress ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, childrenAddress: e.target.value })
+                  }
+                />
+              </div>
+
               <div>
                 <Label>Anak Ke-</Label>
                 <Input
                   size="large"
                   type="number"
-                  value={form.index}
+                  value={form.index ?? ""}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      index: Number(e.target.value),
+                      index: e.target.value ? Number(e.target.value) : null,
                     })
                   }
                 />
               </div>
 
-              {/* Status */}
               <div>
                 <Label>Status</Label>
                 <Select
@@ -273,16 +389,41 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Catatan */}
               <div>
                 <Label>Catatan</Label>
                 <TextArea
-                  size="large"
                   rows={3}
-                  value={form.notes}
+                  size="large"
+                  value={form.notes ?? ""}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label>Foto Lama</Label>
+
+              {form.childrenPict ? (
+                <div className="flex items-start gap-3">
+                  <Image
+                    src={form.childrenPict || "/images/user/alt-user.png"}
+                    alt="Preview Foto"
+                    className="object-cover rounded-md max-h-32"
+                  />
+
+                  <Popconfirm
+                    title="Hapus Foto?"
+                    description="Foto ini akan dihapus dari server."
+                    onConfirm={handleDeleteChildrenPhoto}
+                    okText="Ya, Hapus"
+                    cancelText="Batal"
+                  >
+                    <AButton>Hapus Foto</AButton>
+                  </Popconfirm>
+                </div>
+              ) : (
+                <div className="text-gray-500 italic">Tidak Ada Foto Lama</div>
+              )}
             </div>
           </ComponentCard>
         </div>
@@ -291,15 +432,14 @@ export default function CreateChildren() {
         <div className="space-y-6">
           <ComponentCard title="Data Tambahan">
             <div className="space-y-6">
-              {/* Keluarga */}
               <div>
                 <Label>Keluarga</Label>
                 <Select
-                  showSearch
                   size="large"
                   className="w-full"
-                  options={homes}
+                  showSearch
                   value={form.homeId}
+                  options={homes}
                   onChange={(value, option: any) =>
                     setForm({
                       ...form,
@@ -311,7 +451,6 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Gender */}
               <div>
                 <Label>Jenis Kelamin *</Label>
                 <Select
@@ -326,9 +465,8 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Ayah */}
               <div>
-                <Label>Status Ayah *</Label>
+                <Label>Status Ayah</Label>
                 <Select
                   size="large"
                   className="w-full"
@@ -341,9 +479,8 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Ibu */}
               <div>
-                <Label>Status Ibu *</Label>
+                <Label>Status Ibu</Label>
                 <Select
                   size="large"
                   className="w-full"
@@ -356,9 +493,8 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Kondisi */}
               <div>
-                <Label>Kondisi *</Label>
+                <Label>Kondisi</Label>
                 <Select
                   size="large"
                   className="w-full"
@@ -371,21 +507,19 @@ export default function CreateChildren() {
                 />
               </div>
 
-              {/* Foto */}
               <div>
-                <Label>Foto Anak</Label>
+                <Label>Foto Baru</Label>
                 <FileInput onChange={handleSelectFile} />
                 {previewPict && (
                   <Image
                     src={previewPict}
-                    className="mt-3 h-32 object-cover rounded-md"
                     alt="Preview"
+                    className="object-cover mt-3 rounded-md h-32"
                   />
                 )}
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-between pt-6">
               <Button
                 className="bg-gray-500 text-white"
@@ -397,9 +531,9 @@ export default function CreateChildren() {
               <Button
                 onClick={handleSubmit}
                 disabled={submitLoading}
-                className="px-4 py-2 text-white rounded bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                className="px-4 py-2 text-white rounded bg-primary-600 hover:bg-primary-700"
               >
-                {submitLoading ? "Menyimpan..." : "Simpan"}
+                {submitLoading ? "Menyimpan..." : "Simpan Perubahan"}
               </Button>
             </div>
           </ComponentCard>
