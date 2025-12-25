@@ -74,7 +74,7 @@ export default function SignInForm() {
                     Username <span className="text-error-500">*</span>{" "}
                   </Label>
                   <Input
-                    placeholder="info@gmail.com"
+                    placeholder="Masukkan username anda"
                     type="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -89,7 +89,7 @@ export default function SignInForm() {
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
+                      placeholder="Masukkan password anda"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required

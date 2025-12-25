@@ -17,6 +17,7 @@ import { Employee } from "@/types/employee";
 import { Wali } from "@/types/wali";
 import { useRouter } from "next/navigation";
 import { Option } from "@/components/form/Select";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 const { TextArea } = Input;
 
@@ -249,11 +250,11 @@ export default function CreateWali() {
 
               <div>
                 <Label>No. Telepon Wali</Label>
-                <Input
+                <InputPhone
                   size="large"
                   value={form.waliPhone ?? ""}
                   onChange={(e) =>
-                    setForm({ ...form, waliPhone: e.target.value })
+                    setForm({ ...form, waliPhone: e })
                   }
                 />
               </div>

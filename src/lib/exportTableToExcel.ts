@@ -3,15 +3,14 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import type { ColumnsType } from "antd/es/table";
 
-/**
- * Generic Excel export for Ant Design Table
- * Safe, styled, and TypeScript strict-friendly
- */
 type ExportOptions<T> = {
   data: T[];
   columns: ColumnsType<T>;
   filename?: string;
   sheetName?: string;
+
+  /** 👇 daftar dataIndex kolom yang ingin di-merge */
+  mergeColumns?: string[];
 };
 
 export async function exportTableToExcel<T>({
@@ -19,48 +18,55 @@ export async function exportTableToExcel<T>({
   columns,
   filename = "export",
   sheetName = "Sheet1",
+  mergeColumns = [],
 }: ExportOptions<T>) {
   if (!data || data.length === 0) return;
 
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(sheetName, {
-    views: [{ state: "frozen", ySplit: 1 }], // Freeze header
+    views: [{ state: "frozen", ySplit: 1 }],
   });
 
-  /**
-   * Filter kolom:
-   * - Harus punya dataIndex
-   * - Bukan kolom aksi
-   */
-  const validColumns = columns.filter(
+  // =========================
+  // FILTER & SORT COLUMNS
+  // =========================
+  const filteredColumns = columns.filter(
     (col: any) => col.dataIndex && col.key !== "actions" && col.title !== "Aksi"
   ) as any[];
+
+  const normalColumns = filteredColumns.filter(
+    (col) => !String(col.dataIndex).toLowerCase().endsWith("pict")
+  );
+
+  const pictColumns = filteredColumns.filter((col) =>
+    String(col.dataIndex).toLowerCase().endsWith("pict")
+  );
+
+  const validColumns = [...normalColumns, ...pictColumns];
 
   // =========================
   // HEADER
   // =========================
-  worksheet.columns = validColumns.map((col) => ({
-    header: typeof col.title === "string" ? col.title : String(col.key),
-    key: col.dataIndex,
-    width: 20,
-  }));
+  worksheet.columns = validColumns.map((col) => {
+    const isPict = String(col.dataIndex).toLowerCase().endsWith("pict");
+
+    return {
+      header: typeof col.title === "string" ? col.title : String(col.key),
+      key: col.dataIndex,
+      width: isPict ? 10 : 20,
+    };
+  });
 
   const headerRow = worksheet.getRow(1);
   headerRow.height = 24;
 
   headerRow.eachCell((cell) => {
-    cell.font = {
-      bold: true,
-      color: { argb: "FFFFFFFF" },
-    };
-    cell.alignment = {
-      vertical: "middle",
-      horizontal: "center",
-    };
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FF2563EB" }, // blue-600
+      fgColor: { argb: "FF2563EB" },
     };
     cell.border = fullBorder();
   });
@@ -74,32 +80,22 @@ export async function exportTableToExcel<T>({
     validColumns.forEach((col) => {
       let value: any;
 
-      // 1️⃣ Jika ada exportRender → PAKAI
       if (typeof col.exportRender === "function") {
         value = col.exportRender(row[col.dataIndex], row, index);
-      }
-      // 2️⃣ Jika ada render → coba pakai render
-      else if (typeof col.render === "function") {
+      } else if (typeof col.render === "function") {
         const rendered = col.render(row[col.dataIndex], row, index);
-
-        // Jika render menghasilkan primitive
-        if (typeof rendered === "string" || typeof rendered === "number") {
-          value = rendered;
-        } else {
-          value = row[col.dataIndex];
-        }
-      }
-      // 3️⃣ Default
-      else {
+        value =
+          typeof rendered === "string" || typeof rendered === "number"
+            ? rendered
+            : row[col.dataIndex];
+      } else {
         value = row[col.dataIndex];
       }
 
-      // Boolean
       if (typeof value === "boolean") {
         value = value ? "Ya" : "Tidak";
       }
 
-      // Date
       if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
         value = new Date(value).toLocaleDateString("id-ID");
       }
@@ -109,35 +105,43 @@ export async function exportTableToExcel<T>({
 
     const excelRow = worksheet.addRow(record);
 
-    // Zebra striping
     if (index % 2 === 1) {
       excelRow.eachCell((cell) => {
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "FFF1F5F9" }, // slate-100
+          fgColor: { argb: "FFF1F5F9" },
         };
       });
     }
 
     excelRow.eachCell((cell) => {
-      cell.alignment = {
-        vertical: "middle",
-        horizontal: "left",
-      };
+      cell.alignment = { vertical: "middle", horizontal: "left" };
       cell.border = fullBorder();
     });
   });
 
   // =========================
+  // MERGE BY PARAM
+  // =========================
+  mergeColumns.forEach((columnKey) => {
+    mergeSameValueCells(worksheet, columnKey);
+  });
+
+  // =========================
   // AUTO COLUMN WIDTH
   // =========================
-  worksheet.columns?.forEach((column) => {
+  worksheet.columns?.forEach((column: any) => {
     if (!column || typeof column.eachCell !== "function") return;
+
+    if (String(column.key).toLowerCase().endsWith("pict")) {
+      column.width = 10;
+      return;
+    }
 
     let maxLength = 10;
 
-    column.eachCell({ includeEmpty: true }, (cell) => {
+    column.eachCell({ includeEmpty: true }, (cell: any) => {
       const value = cell.value ? cell.value.toString() : "";
       maxLength = Math.max(maxLength, value.length);
     });
@@ -157,7 +161,7 @@ export async function exportTableToExcel<T>({
 }
 
 // =========================
-// BORDER HELPER (TYPE SAFE)
+// HELPERS
 // =========================
 function fullBorder(): Partial<ExcelJS.Borders> {
   return {
@@ -166,4 +170,60 @@ function fullBorder(): Partial<ExcelJS.Borders> {
     bottom: { style: "thin" },
     right: { style: "thin" },
   };
+}
+
+function mergeSameValueCells(worksheet: ExcelJS.Worksheet, columnKey: string) {
+  const column = worksheet.getColumn(columnKey);
+  if (!column) return;
+
+  let startRow = 2;
+  let prevValue: any = null;
+
+  column.eachCell({ includeEmpty: false }, (cell, rowNumber) => {
+    if (rowNumber === 1) return;
+
+    const currentValue = cell.value;
+    if (
+      currentValue === null ||
+      currentValue === undefined ||
+      currentValue === "-" ||
+      currentValue === ""
+    ) {
+      prevValue = null;
+      startRow = rowNumber;
+      return;
+    }
+
+    if (prevValue === null) {
+      prevValue = currentValue;
+      startRow = rowNumber;
+      return;
+    }
+
+    if (currentValue !== prevValue) {
+      if (rowNumber - startRow > 1) {
+        worksheet.mergeCells(
+          startRow,
+          column.number,
+          rowNumber - 1,
+          column.number
+        );
+        worksheet.getCell(startRow, column.number).alignment = {
+          vertical: "middle",
+          horizontal: "left",
+        };
+      }
+      startRow = rowNumber;
+      prevValue = currentValue;
+    }
+  });
+
+  const lastRow = worksheet.lastRow?.number ?? startRow;
+  if (lastRow - startRow >= 1) {
+    worksheet.mergeCells(startRow, column.number, lastRow, column.number);
+    worksheet.getCell(startRow, column.number).alignment = {
+      vertical: "middle",
+      horizontal: "center",
+    };
+  }
 }

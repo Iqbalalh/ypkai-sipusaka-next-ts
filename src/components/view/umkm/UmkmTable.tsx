@@ -19,13 +19,12 @@ import Link from "next/link";
 import { Region } from "@/types/region";
 import { ApiResponseList } from "@/types/api-response";
 import { Umkm } from "@/types/umkm";
+import { exportTableToExcel } from "@/lib/exportTableToExcel";
 
-export default function UmkmTable({
-  onCountChange,
-}: {
-  onCountChange?: (count: number) => void;
-}) {
+export default function UmkmTable() {
   const [data, setData] = useState<Umkm[]>([]);
+  const [currentData, setCurrentData] = useState<Umkm[]>([]);
+  const [count, setCount] = useState<number>(0);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -41,7 +40,7 @@ export default function UmkmTable({
         const json: ApiResponseList<Umkm> = await res.json();
         const items = camelcaseKeys(json.data, { deep: true }) as Umkm[];
         setData(items);
-        onCountChange?.(items.length);
+        setCount(items.length);
       } catch (error) {
         console.error("Error fetching UMKM:", error);
       } finally {
@@ -50,7 +49,7 @@ export default function UmkmTable({
     };
 
     fetchUmkm();
-  }, [onCountChange]);
+  }, []);
 
   // Fetch Region
   useEffect(() => {
@@ -68,6 +67,19 @@ export default function UmkmTable({
 
     fetchRegions();
   }, []);
+
+  useEffect(() => {
+    setCurrentData(data);
+  }, [data]);
+
+  const handleExportExcel = () => {
+    exportTableToExcel<Umkm>({
+      data: currentData.length ? currentData : data,
+      columns,
+      filename: "data-umkm",
+      sheetName: "UMKM",
+    });
+  };
 
   // SEARCH
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,12 +164,12 @@ export default function UmkmTable({
 
   // COLUMNS
   const columns: ColumnsType<Umkm> = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      width: 60,
-    },
+    // {
+    //   title: "ID",
+    //   dataIndex: "id",
+    //   key: "id",
+    //   width: 60,
+    // },
     {
       title: "Pemilik",
       dataIndex: "ownerName",
@@ -281,6 +293,27 @@ export default function UmkmTable({
 
   return (
     <div className="overflow-x-auto">
+      <div className="flex justify-between items-center gap-4 mb-8">
+        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+          Jumlah Data: {count}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+
+          <Link href={"/umkm/create"}>
+            <Button
+              onClick={() => setLoading(true)}
+              disabled={loading}
+              size="sm"
+            >
+              +
+            </Button>
+          </Link>
+        </div>
+      </div>
       <Table
         columns={columns}
         dataSource={data}
@@ -289,7 +322,8 @@ export default function UmkmTable({
         bordered
         scroll={{ x: "max-content", y: 500 }}
         onChange={(pagination, filters, sorter, extra) => {
-          onCountChange?.(extra.currentDataSource.length);
+          setCurrentData(extra.currentDataSource as Umkm[]);
+          setCount(extra.currentDataSource.length);
         }}
       />
     </div>

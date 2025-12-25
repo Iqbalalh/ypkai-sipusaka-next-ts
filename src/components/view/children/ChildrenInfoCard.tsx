@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-import { API_CHILDRENS } from "@/lib/apiEndpoint";
+import { API_CHILDRENS, API_IMAGE } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
@@ -13,6 +13,8 @@ import { ApiResponseSingle } from "@/types/api-response";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import { Children } from "@/types/children";
 import Link from "next/link";
+import { handlePrintChildren } from "@/lib/pdf-modules/children.pdf";
+import { extractKeyFromPresignedUrl } from "@/lib/extractKeyFromPresignedUrl";
 
 export default function ChildrenInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -104,6 +106,19 @@ export default function ChildrenInfoCard() {
               </div>
 
               <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    handlePrintChildren(
+                      data,
+                      `${API_IMAGE}/?keyObject=${extractKeyFromPresignedUrl(
+                        data?.childrenPict
+                      )}`
+                    )
+                  }
+                >
+                  Print
+                </Button>
                 <Link href={`/children/edit/${data?.id}`}>
                   <Button variant="outline">Edit</Button>
                 </Link>
@@ -121,7 +136,33 @@ export default function ChildrenInfoCard() {
               <InfoItem label="NIK" value={data?.nik || "-"} />
               <InfoItem label="Pekerjaan" value={data?.childrenJob || "-"} />
               <InfoItem label="Alamat" value={data?.childrenAddress || "-"} />
-              <InfoItem label="Nomor Telp" value={data?.childrenPhone || "-"} />
+              <InfoItem
+                label="Nomor Telp"
+                value={
+                  data?.childrenPhone ? (
+                    <Link
+                      href={`https://wa.me/${
+                        data?.childrenPhone
+                          ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
+                          ?.replace(/^0/, "") // hapus 0 di depan
+                          ?.replace(/\D/g, "") // hapus karakter non-angka
+                          ? `62${data.childrenPhone
+                              .replace(/^\+?62/, "")
+                              .replace(/^0/, "")
+                              .replace(/\D/g, "")}`
+                          : ""
+                      }`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {data?.childrenPhone}
+                    </Link>
+                  ) : (
+                    "-"
+                  )
+                }
+              />
               <InfoItem
                 label="Nama Orangtua"
                 value={`${data?.employeeName} - ${data?.partnerName}`}

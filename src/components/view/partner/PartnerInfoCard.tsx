@@ -4,13 +4,15 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { API_PARTNERS } from "@/lib/apiEndpoint";
+import { API_IMAGE, API_PARTNERS } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Partner } from "@/types/partner";
 import { fetchDataInfo } from "@/lib/fetchDataInfo";
+import { extractKeyFromPresignedUrl } from "@/lib/extractKeyFromPresignedUrl";
+import { handlePrintPartner } from "@/lib/pdf-modules/partner.pdf";
 
 export default function PartnerInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -84,6 +86,19 @@ export default function PartnerInfoCard() {
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  handlePrintPartner(
+                    data,
+                    `${API_IMAGE}/?keyObject=${extractKeyFromPresignedUrl(
+                      data?.partnerPict
+                    )}`
+                  )
+                }
+              >
+                Print
+              </Button>
               <Link href={`/partner/edit/${data?.id}`}>
                 <Button variant="outline">Edit</Button>
               </Link>
@@ -100,7 +115,7 @@ export default function PartnerInfoCard() {
               label="Nomor Telp"
               value={
                 data?.phoneNumber ? (
-                  <a
+                  <Link
                     href={`https://wa.me/${
                       data?.phoneNumber
                         ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
@@ -117,7 +132,7 @@ export default function PartnerInfoCard() {
                     className="text-blue-600 hover:underline"
                   >
                     {data?.phoneNumber}
-                  </a>
+                  </Link>
                 ) : (
                   "-"
                 )

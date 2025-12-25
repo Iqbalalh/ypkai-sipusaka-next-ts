@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 
 import {
   Table,
@@ -42,18 +37,21 @@ import { Children } from "@/types/children";
 import { ApiResponseList } from "@/types/api-response";
 import { Region } from "@/types/region";
 import Badge from "@/components/ui/badge/Badge";
+import { exportTableToExcel } from "@/lib/exportTableToExcel";
 
-export default function ChildrenTable({
-  onCountChange,
-}: {
-  onCountChange?: (count: number) => void;
-}) {
+export default function ChildrenTable() {
   // ==========================
   // STATE
   // ==========================
   const [data, setData] = useState<Children[]>([]);
+  const [currentData, setCurrentData] = useState<Children[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
+  const [count, setCount] = useState(0);
+
+  // ==========================
+  // SEARCH STATE
+  // ==========================
 
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
@@ -69,18 +67,18 @@ export default function ChildrenTable({
   // FETCH REGIONS
   // ==========================
   const fetchRegions = useCallback(async () => {
-      try {
-        const res = await fetchWithAuth(API_REGIONS + "/list");
-        if (!res.ok) throw new Error("Failed to fetch regions");
-  
-        const json: ApiResponseList<Region> = await res.json();
-        const regionList = camelcaseKeys(json.data, { deep: true }) as Region[];
-  
-        setRegions(regionList);
-      } catch (err) {
-        console.error("Error fetching regions:", err);
-      }
-    }, []);
+    try {
+      const res = await fetchWithAuth(API_REGIONS + "/list");
+      if (!res.ok) throw new Error("Failed to fetch regions");
+
+      const json: ApiResponseList<Region> = await res.json();
+      const regionList = camelcaseKeys(json.data, { deep: true }) as Region[];
+
+      setRegions(regionList);
+    } catch (err) {
+      console.error("Error fetching regions:", err);
+    }
+  }, []);
 
   // ==========================
   // FETCH CHILDREN
@@ -96,19 +94,33 @@ export default function ChildrenTable({
       }) as Children[];
 
       setData(children);
-      onCountChange?.(children.length);
+      setCount(children.length);
     } catch (err) {
       console.error(err);
       messageApi.error("Gagal mengambil data anak");
     } finally {
       setLoading(false);
     }
-  }, [onCountChange, messageApi]);
+  }, [messageApi]);
 
   useEffect(() => {
     fetchRegions();
     fetchChildren();
   }, [fetchChildren, fetchRegions]);
+
+  useEffect(() => {
+    setCurrentData(data);
+  }, [data]);
+
+  const handleExportExcel = () => {
+    exportTableToExcel<Children>({
+      data: currentData.length ? currentData : currentData,
+      columns,
+      filename: "data-anak",
+      sheetName: "Anak",
+      mergeColumns: ["orangtua", "waliName"],
+    });
+  };
 
   // ==========================
   // DELETE HANDLER
@@ -198,7 +210,6 @@ export default function ChildrenTable({
         : false;
     },
 
-
     render: (text: string) =>
       searchedColumn === dataIndex ? (
         <Highlighter
@@ -227,95 +238,19 @@ export default function ChildrenTable({
     setSearchText("");
   };
 
-  // ==========================
-  // TABLE COLUMNS
-  // ==========================
-  // const columns: ColumnsType<Children> = [
-  //   {
-  //     title: "ID",
-  //     dataIndex: "id",
-  //     width: 70,
-  //   },
-  //   {
-  //     title: "Foto",
-  //     dataIndex: "childrenPict",
-  //     render: (val, row) => (
-  //       <Image
-  //         src={val || "/images/user/alt-user.png"}
-  //         alt={row.childrenName}
-  //         width={40}
-  //         height={40}
-  //         className="rounded-full object-cover w-10 h-10"
-  //       />
-  //     ),
-  //   },
-  //   {
-  //     title: "Nama Anak",
-  //     dataIndex: "childrenName",
-  //     ...getColumnSearchProps("childrenName"),
-  //   },
-  //   {
-  //     title: "Orangtua",
-  //     dataIndex: "orangtua",
-  //     render: (_, row) =>
-  //       `${row.employeeName ?? "-"} - ${row.partnerName ?? "-"}`,
-  //   },
-
-  //   // REGION
-
-  //   {
-  //     title: "Wali",
-  //     dataIndex: "waliName",
-  //     render: (val) => val || "-",
-  //     ...getColumnSearchProps("waliName"),
-  //   },
-
-  //   {
-  //     title: "Aksi",
-  //     fixed: "right",
-  //     width: 120,
-  //     render: (_, row) => (
-  //       <div className="flex gap-2 text-xs">
-  //         <Link href={`children/view/${row.id}`}>
-  //           <Button size="xs">
-  //             <EyeOutlined />
-  //           </Button>
-  //         </Link>
-
-  //         <Link href={`children/edit/${row.id}`}>
-  //           <Button size="xs">
-  //             <EditOutlined />
-  //           </Button>
-  //         </Link>
-
-  //         <Button
-  //           size="xs"
-  //           onClick={() => {
-  //             if (!row.id) return;
-  //             setDeleteId(row.id);
-  //             setIsDeleteModalOpen(true);
-  //           }}
-  //         >
-  //           <DeleteOutlined />
-  //         </Button>
-  //       </div>
-  //     ),
-  //   },
-  // ];
-
   const columns: ColumnsType<Children> = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      render: (x) => x || "-",
-      width: 70,
-    },
+    // {
+    //   title: "ID",
+    //   dataIndex: "id",
+    //   key: "id",
+    //   render: (x) => x || "-",
+    //   width: 70,
+    //   hidden: true,
+    // },
     {
       title: "Foto",
       dataIndex: "childrenPict",
       key: "childrenPict",
-      width: 80,
       render: (_, child) =>
         child.childrenPict ? (
           <Image
@@ -341,6 +276,27 @@ export default function ChildrenTable({
       dataIndex: "childrenName",
       key: "childrenName",
       ...getColumnSearchProps("childrenName"),
+    },
+    {
+      title: "NIK",
+      dataIndex: "nik",
+      key: "nik",
+      ...getColumnSearchProps("nik"),
+      render: (x) => x || "-",
+    },
+    {
+      title: "Tanggal Lahir",
+      dataIndex: "childrenBirthdate",
+      key: "childrenBirthdate",
+      render: (text) =>
+        text ? new Date(text).toLocaleDateString("id-ID") : "-",
+    },
+    {
+      title: "Pekerjaan",
+      dataIndex: "childrenJob",
+      key: "childrenJob",
+      ...getColumnSearchProps("childrenJob"),
+      render: (x) => x || "-",
     },
 
     // ==========================
@@ -409,8 +365,8 @@ export default function ChildrenTable({
         const father = record.isFatherAlive;
         const mother = record.isMotherAlive;
 
-        let label = "";
-        let color: "success" | "error" | "warning" | "info" = "success";
+        let label = "Tidak";
+        let color: "success" | "error" | "warning" = "success";
 
         if (!father && mother) {
           label = "Yatim";
@@ -421,9 +377,6 @@ export default function ChildrenTable({
         } else if (!father && !mother) {
           label = "Yatim Piatu";
           color = "error";
-        } else {
-          label = "Tidak";
-          color = "success";
         }
 
         return (
@@ -432,8 +385,19 @@ export default function ChildrenTable({
           </Badge>
         );
       },
-    },
 
+      /** ✅ INI YANG PALING PENTING */
+      exportRender: (_: null, record: Children) => {
+        const father = record.isFatherAlive;
+        const mother = record.isMotherAlive;
+
+        if (!father && mother) return "Yatim";
+        if (father && !mother) return "Piatu";
+        if (!father && !mother) return "Yatim Piatu";
+
+        return "Tidak";
+      },
+    },
     {
       title: "Wilayah",
       dataIndex: "regionId",
@@ -441,12 +405,9 @@ export default function ChildrenTable({
         text: r.regionName,
         value: r.regionId,
       })),
-      onFilter: (value, partner) =>
-        String(partner.regionId) === String(value),
+      onFilter: (value, partner) => String(partner.regionId) === String(value),
       render: (_, partner) => {
-        const region = regions.find(
-          (r) => r.regionId === partner.regionId
-        );
+        const region = regions.find((r) => r.regionId === partner.regionId);
         return region ? region.regionName : "-";
       },
     },
@@ -509,6 +470,28 @@ export default function ChildrenTable({
           {v ? "Normal" : "ABK"}
         </Badge>
       ),
+    },
+
+    {
+      title: "Dibuat Pada",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text) =>
+        text ? new Date(text).toLocaleDateString("id-ID") : "-",
+      exportRender: (value: string) =>
+        value ? new Date(value).toLocaleDateString("id-ID") : "-",
+      hidden: true,
+    },
+
+    {
+      title: "Diperbarui Pada",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      render: (text) =>
+        text ? new Date(text).toLocaleDateString("id-ID") : "-",
+      exportRender: (value: string) =>
+        value ? new Date(value).toLocaleDateString("id-ID") : "-",
+      hidden: true,
     },
 
     {
@@ -591,6 +574,28 @@ export default function ChildrenTable({
         <p>Data yang dihapus tidak dapat dipulihkan.</p>
       </Modal>
 
+      <div className="flex justify-between items-center gap-4 mb-8">
+        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+          Jumlah Data: {count}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+
+          <Link href={"/children/create"}>
+            <Button
+              onClick={() => setLoading(true)}
+              disabled={loading}
+              size="sm"
+            >
+              +
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* TABLE */}
       <Table
         columns={columns}
@@ -599,9 +604,10 @@ export default function ChildrenTable({
         bordered
         pagination={{ pageSize: 50, showSizeChanger: false }}
         scroll={{ x: "max-content", y: 500 }}
-        onChange={(pagination, filters, sorter, extra) =>
-          onCountChange?.(extra.currentDataSource.length)
-        }
+        onChange={(pagination, filters, sorter, extra) => {
+          setCurrentData(extra.currentDataSource as Children[]);
+          setCount(extra.currentDataSource.length);
+        }}
       />
     </div>
   );

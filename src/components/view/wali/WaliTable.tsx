@@ -29,13 +29,12 @@ import camelcaseKeys from "camelcase-keys";
 import Link from "next/link";
 import { ApiResponseList } from "@/types/api-response";
 import { Wali } from "@/types/wali";
+import { exportTableToExcel } from "@/lib/exportTableToExcel";
 
-export default function WaliTable({
-  onCountChange,
-}: {
-  onCountChange?: (count: number) => void;
-}) {
+export default function WaliTable() {
   const [data, setData] = useState<Wali[]>([]);
+  const [currentData, setCurrentData] = useState<Wali[]>([]);
+  const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   const [searchText, setSearchText] = useState("");
@@ -60,17 +59,30 @@ export default function WaliTable({
       const waliData = camelcaseKeys(json.data, { deep: true }) as Wali[];
 
       setData(waliData);
-      onCountChange?.(waliData.length);
+      setCount(waliData.length);
     } catch (error) {
       console.error("Error fetching wali:", error);
     } finally {
       setLoading(false);
     }
-  }, [onCountChange]);
+  }, []);
 
   useEffect(() => {
     fetchWalis();
   }, [fetchWalis]);
+
+  useEffect(() => {
+    setCurrentData(data);
+  }, [data]);
+
+  const handleExportExcel = () => {
+    exportTableToExcel<Wali>({
+      data: currentData.length ? currentData : data,
+      columns,
+      filename: "data-wali",
+      sheetName: "Wali",
+    });
+  };
 
   // ======================================
   // DELETE DATA
@@ -182,12 +194,12 @@ export default function WaliTable({
   // TABLE COLUMNS
   // ======================================
   const columns: ColumnsType<Wali> = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      width: 80,
-      render: (val) => val ?? "-",
-    },
+    // {
+    //   title: "ID",
+    //   dataIndex: "id",
+    //   width: 80,
+    //   render: (val) => val ?? "-",
+    // },
     {
       title: "Foto",
       dataIndex: "waliPict",
@@ -239,7 +251,29 @@ export default function WaliTable({
       title: "No. Telepon",
       dataIndex: "waliPhone",
       ...getColumnSearchProps("waliPhone"),
-      render: (text) => text || "-",
+      render: (text) =>
+        text ? (
+          <Link
+            href={`https://wa.me/${
+              text
+                ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
+                ?.replace(/^0/, "") // hapus 0 di depan
+                ?.replace(/\D/g, "") // hapus karakter non-angka
+                ? `62${text
+                    .replace(/^\+?62/, "")
+                    .replace(/^0/, "")
+                    .replace(/\D/g, "")}`
+                : ""
+            }`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {text}
+          </Link>
+        ) : (
+          "-"
+        ),
     },
     {
       title: "Dibuat",
@@ -248,6 +282,7 @@ export default function WaliTable({
         new Date(a.createdAt || 0).getTime() -
         new Date(b.createdAt || 0).getTime(),
       render: (val) => (val ? new Date(val).toLocaleString() : "-"),
+      hidden: true,
     },
     {
       title: "Diperbarui",
@@ -256,6 +291,7 @@ export default function WaliTable({
         new Date(a.updatedAt || 0).getTime() -
         new Date(b.updatedAt || 0).getTime(),
       render: (val) => (val ? new Date(val).toLocaleString() : "-"),
+      hidden: true,
     },
     {
       title: "Aksi",
@@ -341,6 +377,28 @@ export default function WaliTable({
         <p>Item yang sudah dihapus tidak dapat dipulihkan.</p>
       </Modal>
 
+      <div className="flex justify-between items-center gap-4 mb-8">
+        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+          Jumlah Data: {count}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+
+          <Link href={"/wali/create"}>
+            <Button
+              onClick={() => setLoading(true)}
+              disabled={loading}
+              size="sm"
+            >
+              +
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* TABLE */}
       <Table
         columns={columns}
@@ -350,7 +408,8 @@ export default function WaliTable({
         pagination={{ pageSize: 50, showSizeChanger: false }}
         scroll={{ x: "max-content", y: 500 }}
         onChange={(pagination, filters, sorter, extra) => {
-          onCountChange?.(extra.currentDataSource.length);
+          setCurrentData(extra.currentDataSource as Wali[]);
+          setCount(extra.currentDataSource.length);
         }}
       />
     </div>

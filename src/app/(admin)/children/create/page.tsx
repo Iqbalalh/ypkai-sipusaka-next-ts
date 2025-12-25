@@ -18,6 +18,7 @@ import { API_HOMES, API_CHILDRENS } from "@/lib/apiEndpoint";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import camelcaseKeys from "camelcase-keys";
 import dayjs from "dayjs";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 const { TextArea } = Input;
 
@@ -222,12 +223,10 @@ export default function CreateChildren() {
               {/* Nomor Telepon */}
               <div>
                 <Label>No. Telepon</Label>
-                <Input
+                <InputPhone
                   size="large"
                   value={form.childrenPhone}
-                  onChange={(e) =>
-                    setForm({ ...form, childrenPhone: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, childrenPhone: e })}
                 />
               </div>
 
@@ -252,7 +251,7 @@ export default function CreateChildren() {
                 />
               </div>
 
-               {/* Alamat */}
+              {/* Alamat */}
               <div>
                 <Label>Alamat</Label>
                 <TextArea

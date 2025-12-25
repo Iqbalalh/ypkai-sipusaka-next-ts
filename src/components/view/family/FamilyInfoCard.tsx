@@ -7,21 +7,21 @@ import { API_HOMES } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-import { HomeDetails } from "@/types/home";
+import { Family } from "@/types/home";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { fetchDataInfo } from "@/lib/fetchDataInfo";
 
 export default function FamilyInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [data, setData] = useState<HomeDetails | null>(null);
+  const [data, setData] = useState<Family | null>(null);
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHomes = async () => {
       if (!id) return;
-      fetchDataInfo<HomeDetails>({
+      fetchDataInfo<Family>({
         url: `${API_HOMES}/detail/${id}`,
         onSuccess: setData,
         setLoading,
@@ -55,7 +55,7 @@ export default function FamilyInfoCard() {
           Data Keluarga{" "}
           <div>
             <Badge>
-              {data?.homeDetails.selectedRegionName || "Tidak ada data"}
+              {data?.selectedRegionName || "Tidak ada data"}
             </Badge>
           </div>
         </h4>
@@ -73,7 +73,7 @@ export default function FamilyInfoCard() {
                 width={80}
                 height={80}
                 src={
-                  data?.homeDetails.employee.employeePict ||
+                  data?.employee.employeePict ||
                   "/images/user/alt-user.png"
                 }
                 alt={"Profile"}
@@ -82,26 +82,26 @@ export default function FamilyInfoCard() {
 
             <div>
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                {data?.homeDetails.employee.employeeName} (
-                {data?.homeDetails.employee.nipNipp})
+                {data?.employee.employeeName} (
+                {data?.employee.nipNipp})
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-md text-gray-500 dark:text-gray-400">
-                  {data?.homeDetails.employee.employeeGender === "M"
+                  {data?.employee.employeeGender === "M"
                     ? "Laki-laki"
                     : "Perempuan"}
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   <Badge>
-                    {data?.homeDetails.employee.isAccident ? "PLH" : "Non-PLH"}
+                    {data?.employee.isAccident ? "PLH" : "Non-PLH"}
                   </Badge>
                 </p>
               </div>
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-              <Link href={`/employee/edit/${data?.homeDetails.employeeId}`}>
+              <Link href={`/employee/edit/${data?.employeeId}`}>
                 <Button variant="outline">Edit</Button>
               </Link>
             </div>
@@ -114,33 +114,33 @@ export default function FamilyInfoCard() {
             <InfoItem
               label="Kecelakaan/Meninggal"
               value={
-                data?.homeDetails.employee.isAccident
+                data?.employee.isAccident
                   ? "Kecelakaan"
                   : "Meninggal"
               }
             />
             <InfoItem
               label="Penyebab Kematian"
-              value={data?.homeDetails.employee.deathCause || "-"}
+              value={data?.employee.deathCause || "-"}
             />
             <InfoItem
               label="Posisi Terakhir"
-              value={data?.homeDetails.employee.lastPosition || "-"}
+              value={data?.employee.lastPosition || "-"}
             />
             <InfoItem
               label="Catatan"
-              value={data?.homeDetails.employee.notes || "-"}
+              value={data?.employee.notes || "-"}
             />
             {/* <InfoItem
               label="Wilayah"
-              value={data?.homeDetails.employeeRegionName?.toString() || "-"}
+              value={data?.employeeRegionName?.toString() || "-"}
             /> */}
             <InfoItem
               label="Dibuat Pada"
               value={
-                data?.homeDetails.employee.createdAt
+                data?.employee.createdAt
                   ? new Date(
-                      data.homeDetails.employee.createdAt
+                      data.employee.createdAt
                     ).toLocaleString()
                   : "-"
               }
@@ -148,9 +148,9 @@ export default function FamilyInfoCard() {
             <InfoItem
               label="Diperbarui Pada"
               value={
-                data?.homeDetails.employee.updatedAt
+                data?.employee.updatedAt
                   ? new Date(
-                      data.homeDetails.employee.updatedAt
+                      data.employee.updatedAt
                     ).toLocaleString()
                   : "-"
               }
@@ -164,7 +164,7 @@ export default function FamilyInfoCard() {
         <h4 className="text-2xl font-semibold flex text-gray-800 dark:text-white/90 mb-4 gap-4">
           Pasangan{" "}
           <div>
-            {data?.homeDetails.partner.isUmkm ? (
+            {data?.partner.isUmkm ? (
               <Badge color="info">UMKM</Badge>
             ) : (
               ""
@@ -178,7 +178,7 @@ export default function FamilyInfoCard() {
                 width={80}
                 height={80}
                 src={
-                  data?.homeDetails.partner.partnerPict ||
+                  data?.partner.partnerPict ||
                   "/images/user/alt-user.png"
                 }
                 alt={"Profile"}
@@ -187,21 +187,21 @@ export default function FamilyInfoCard() {
 
             <div>
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                {data?.homeDetails.partner.isAlive == false ? "Alm. " : ""}
-                {data?.homeDetails.partner.partnerName}
+                {data?.partner.isAlive == false ? "Alm. " : ""}
+                {data?.partner.partnerName}
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-md text-gray-500 dark:text-gray-400">
-                  {data?.homeDetails.partner.partnerJob || "Tidak Bekerja"}
+                  {data?.partner.partnerJob || "Tidak Bekerja"}
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   <Badge
                     color={
-                      data?.homeDetails.partner.isActive ? "success" : "error"
+                      data?.partner.isActive ? "success" : "error"
                     }
                   >
-                    {data?.homeDetails.partner.isActive
+                    {data?.partner.isActive
                       ? "Aktif"
                       : "Tidak Aktif"}
                   </Badge>
@@ -210,7 +210,7 @@ export default function FamilyInfoCard() {
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-              <Link href={`/partner/edit/${data?.homeDetails.partnerId}`}>
+              <Link href={`/partner/edit/${data?.partnerId}`}>
                 <Button variant="outline">Edit</Button>
               </Link>
             </div>
@@ -222,23 +222,23 @@ export default function FamilyInfoCard() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
             <InfoItem
               label="Alamat"
-              value={data?.homeDetails.partner.address || ""}
+              value={data?.partner.address || ""}
             />
             <InfoItem
               label="NIK"
-              value={data?.homeDetails.partner.partnerNik || "-"}
+              value={data?.partner.partnerNik || "-"}
             />
             <InfoItem
               label="Nomor Telp"
               value={
-                data?.homeDetails.partner.phoneNumber ? (
+                data?.partner.phoneNumber ? (
                   <a
                     href={`https://wa.me/${
-                      data?.homeDetails.partner.phoneNumber
+                      data?.partner.phoneNumber
                         ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
                         ?.replace(/^0/, "") // hapus 0 di depan
                         ?.replace(/\D/g, "") // hapus karakter non-angka
-                        ? `62${data.homeDetails.partner.phoneNumber
+                        ? `62${data.partner.phoneNumber
                             .replace(/^\+?62/, "")
                             .replace(/^0/, "")
                             .replace(/\D/g, "")}`
@@ -248,7 +248,7 @@ export default function FamilyInfoCard() {
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
                   >
-                    {data?.homeDetails.partner.phoneNumber}
+                    {data?.partner.phoneNumber}
                   </a>
                 ) : (
                   "-"
@@ -257,45 +257,45 @@ export default function FamilyInfoCard() {
             />
             <InfoItem
               label="Nomor Telp Alt"
-              value={data?.homeDetails.partner.phoneNumberAlt || "-"}
+              value={data?.partner.phoneNumberAlt || "-"}
             />
             {/* <InfoItem
               label="Status Aktif"
-              value={data?.homeDetails.partnerIsActive ? "Aktif" : "Tidak Aktif"}
+              value={data?.partnerIsActive ? "Aktif" : "Tidak Aktif"}
             /> */}
             <InfoItem
               label="Status Hidup"
-              value={data?.homeDetails.partner.isAlive ? "Hidup" : "Meninggal"}
+              value={data?.partner.isAlive ? "Hidup" : "Meninggal"}
             />
             {/* <InfoItem
               label="Wilayah ID"
-              value={data?.homeDetails.partnerRegionName?.toString() || "-"}
+              value={data?.partnerRegionName?.toString() || "-"}
             /> */}
             {/* <InfoItem
               label="Subdistrict ID"
-              value={data?.homeDetails.partnerSubdistrictId?.toString() || "-"}
+              value={data?.partnerSubdistrictId?.toString() || "-"}
             /> */}
             <InfoItem
               label="Koordinat Rumah"
               value={
                 <a
                   href={`https://www.google.com/maps?q=${encodeURIComponent(
-                    String(data?.homeDetails.partner.homeCoordinate || "-")
+                    String(data?.partner.homeCoordinate || "-")
                   )}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-blue-600 hover:underline"
                 >
-                  {data?.homeDetails.partner.homeCoordinate || "-"}
+                  {data?.partner.homeCoordinate || "-"}
                 </a>
               }
             />
             <InfoItem
               label="Dibuat Pada"
               value={
-                data?.homeDetails.partner.createdAt
+                data?.partner.createdAt
                   ? new Date(
-                      data.homeDetails.partner.createdAt
+                      data.partner.createdAt
                     ).toLocaleString()
                   : "-"
               }
@@ -303,9 +303,9 @@ export default function FamilyInfoCard() {
             <InfoItem
               label="Diperbarui Pada"
               value={
-                data?.homeDetails.partner.updatedAt
+                data?.partner.updatedAt
                   ? new Date(
-                      data.homeDetails.partner.updatedAt
+                      data.partner.updatedAt
                     ).toLocaleString()
                   : "-"
               }
@@ -315,7 +315,7 @@ export default function FamilyInfoCard() {
       </div>
 
       {/* Wali */}
-      {data?.homeDetails.waliId && (
+      {data?.waliId && (
         <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-6">
           <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
             Wali
@@ -329,28 +329,28 @@ export default function FamilyInfoCard() {
                     width={80}
                     height={80}
                     src={
-                      data?.homeDetails.wali.waliPict ||
+                      data?.wali.waliPict ||
                       "/images/user/alt-user.png"
                     }
                     alt={`Profile Wali ${
-                      data?.homeDetails.wali.waliName || ""
+                      data?.wali.waliName || ""
                     }`}
                   />
                 </div>
 
                 <div>
                   <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                    {data?.homeDetails.wali.waliName}
+                    {data?.wali.waliName}
                   </h4>
                   <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                     <p className="text-md text-gray-500 dark:text-gray-400">
-                      {data?.homeDetails.wali.relation ||
+                      {data?.wali.relation ||
                         "Relasi tidak diketahui"}
                     </p>
                     <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       <Badge>
-                        {data?.homeDetails.selectedRegionName ||
+                        {data?.selectedRegionName ||
                           "Region tidak ada"}
                       </Badge>
                     </p>
@@ -358,7 +358,7 @@ export default function FamilyInfoCard() {
                 </div>
 
                 <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
-                  <Link href={`/wali/edit/${data?.homeDetails.waliId}`}>
+                  <Link href={`/wali/edit/${data?.waliId}`}>
                     <Button variant="outline">Edit</Button>
                   </Link>
                 </div>
@@ -370,26 +370,26 @@ export default function FamilyInfoCard() {
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
                 <InfoItem
                   label="Nomor Telp"
-                  value={data?.homeDetails.wali.waliPhone || "-"}
+                  value={data?.wali.waliPhone || "-"}
                 />
                 <InfoItem
                   label="Hubungan"
-                  value={data?.homeDetails.wali.relation || "-"}
+                  value={data?.wali.relation || "-"}
                 />
                 <InfoItem
                   label="Alamat"
-                  value={data?.homeDetails.wali.waliAddress}
+                  value={data?.wali.waliAddress}
                 />
                 <InfoItem
                   label="Koordinat Alamat"
-                  value={data?.homeDetails.wali.addressCoordinate || "-"}
+                  value={data?.wali.addressCoordinate || "-"}
                 />
                 <InfoItem
                   label="Dibuat Pada"
                   value={
-                    data?.homeDetails.wali.createdAt
+                    data?.wali.createdAt
                       ? new Date(
-                          data.homeDetails.wali.createdAt
+                          data.wali.createdAt
                         ).toLocaleString()
                       : "-"
                   }
@@ -397,9 +397,9 @@ export default function FamilyInfoCard() {
                 <InfoItem
                   label="Diperbarui Pada"
                   value={
-                    data?.homeDetails.wali.updatedAt
+                    data?.wali.updatedAt
                       ? new Date(
-                          data.homeDetails.wali.updatedAt
+                          data.wali.updatedAt
                         ).toLocaleString()
                       : "-"
                   }
@@ -413,11 +413,11 @@ export default function FamilyInfoCard() {
       {/* Children List */}
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-6">
         <h4 className="text-2xl font-semibold text-gray-800 dark:text-white/90 mb-4">
-          Anak Tertanggung ({data?.homeDetails.childrens?.length || 0})
+          Anak Tertanggung ({data?.childrens?.length || 0})
         </h4>
-        {data?.homeDetails.childrens &&
-        data.homeDetails.childrens.length > 0 ? (
-          data.homeDetails.childrens.map((child, index) => (
+        {data?.childrens &&
+        data.childrens.length > 0 ? (
+          data.childrens.map((child, index) => (
             <div
               key={child.id || index}
               className={`border-t border-gray-200 dark:border-gray-700 py-4 ${

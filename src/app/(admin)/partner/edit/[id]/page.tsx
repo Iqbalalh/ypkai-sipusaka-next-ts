@@ -35,6 +35,7 @@ import { Subdistricts } from "@/types/subdistrict";
 import { Partner } from "@/types/partner";
 import { useParams, useRouter } from "next/navigation";
 import { extractKeyFromUrl } from "@/lib/extractKey";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 const { TextArea } = Input;
 
@@ -341,22 +342,22 @@ export default function UpdatePartner() {
 
               <div>
                 <Label>Nomor Telepon *</Label>
-                <Input
+                <InputPhone
                   size="large"
                   value={form.phoneNumber}
                   onChange={(e) =>
-                    setForm({ ...form, phoneNumber: e.target.value })
+                    setForm({ ...form, phoneNumber: e })
                   }
                 />
               </div>
 
               <div>
                 <Label>Nomor Telepon Alternatif</Label>
-                <Input
+                <InputPhone
                   size="large"
                   value={form.phoneNumberAlt}
                   onChange={(e) =>
-                    setForm({ ...form, phoneNumberAlt: e.target.value })
+                    setForm({ ...form, phoneNumberAlt: e })
                   }
                 />
               </div>

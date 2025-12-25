@@ -18,7 +18,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
-  const { data, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
@@ -38,9 +38,6 @@ export default function AdminLayout({
   }
 
   if (status === "authenticated") {
-    {
-      console.log(data);
-    }
     const mainContentMargin = isMobileOpen
       ? "ml-0"
       : isExpanded || isHovered
@@ -49,7 +46,7 @@ export default function AdminLayout({
 
     return (
       <div className="min-h-screen xl:flex max-w-[100vw] overflow-x-hidden">
-        <NextTopLoader />
+        <NextTopLoader showSpinner={false} />
 
         {/* Sidebar and Backdrop */}
         <AppSidebar />

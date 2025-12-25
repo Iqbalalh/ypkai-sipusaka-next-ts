@@ -1,12 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Table,
   Input,
@@ -36,13 +31,12 @@ import { Region } from "@/types/region";
 import { Partner } from "@/types/partner";
 import { ApiResponseList } from "@/types/api-response";
 import Badge from "@/components/ui/badge/Badge";
+import { exportTableToExcel } from "@/lib/exportTableToExcel";
 
-export default function PartnerTable({
-  onCountChange,
-}: {
-  onCountChange?: (count: number) => void;
-}) {
+export default function PartnerTable() {
   const [data, setData] = useState<Partner[]>([]);
+  const [count, setCount] = useState<number>(0);
+  const [currentData, setCurrentData] = useState<Partner[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,13 +63,13 @@ export default function PartnerTable({
       const partners = camelcaseKeys(json.data, { deep: true }) as Partner[];
 
       setData(partners);
-      onCountChange?.(partners.length);
+      setCount(partners.length);
     } catch (err) {
       console.error("Error fetching partners:", err);
     } finally {
       setLoading(false);
     }
-  }, [onCountChange]);
+  }, []);
 
   // ============================================================
   // FETCH REGIONS
@@ -98,6 +92,19 @@ export default function PartnerTable({
     fetchPartners();
     fetchRegions();
   }, [fetchPartners, fetchRegions]);
+
+  useEffect(() => {
+    setCurrentData(data);
+  }, [data]);
+
+  const handleExportExcel = () => {
+    exportTableToExcel<Partner>({
+      data: currentData.length ? currentData : data,
+      columns,
+      filename: "data-partner",
+      sheetName: "Partner",
+    });
+  };
 
   // ============================================================
   // DELETE HANDLER
@@ -128,9 +135,7 @@ export default function PartnerTable({
   // ============================================================
   // SEARCH UTILITY
   // ============================================================
-  const getColumnSearchProps = (
-    dataIndex: keyof Partner
-  ): any => ({
+  const getColumnSearchProps = (dataIndex: keyof Partner): any => ({
     filterDropdown: ({
       setSelectedKeys,
       selectedKeys,
@@ -178,7 +183,7 @@ export default function PartnerTable({
       <SearchOutlined style={{ color: filtered ? "#1677ff" : undefined }} />
     ),
 
-    onFilter: (value: any, record: { [x: string]: any; }) => {
+    onFilter: (value: any, record: { [x: string]: any }) => {
       const fieldValue = record[dataIndex];
       return fieldValue
         ? String(fieldValue).toLowerCase().includes(String(value).toLowerCase())
@@ -222,12 +227,12 @@ export default function PartnerTable({
   // COLUMNS
   // ============================================================
   const columns: ColumnsType<Partner> = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      width: 80,
-      render: (val) => val ?? "-",
-    },
+    // {
+    //   title: "ID",
+    //   dataIndex: "id",
+    //   width: 80,
+    //   render: (val) => val ?? "-",
+    // },
     {
       title: "Foto",
       dataIndex: "partnerPict",
@@ -264,12 +269,9 @@ export default function PartnerTable({
         text: r.regionName,
         value: r.regionId,
       })),
-      onFilter: (value, partner) =>
-        String(partner.regionId) === String(value),
+      onFilter: (value, partner) => String(partner.regionId) === String(value),
       render: (_, partner) => {
-        const region = regions.find(
-          (r) => r.regionId === partner.regionId
-        );
+        const region = regions.find((r) => r.regionId === partner.regionId);
         return region ? region.regionName : "-";
       },
     },
@@ -313,13 +315,57 @@ export default function PartnerTable({
       title: "No. Telp",
       dataIndex: "phoneNumber",
       ...getColumnSearchProps("phoneNumber"),
-      render: (text) => text || "-",
+      render: (text) =>
+        text ? (
+          <Link
+            href={`https://wa.me/${
+              text
+                ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
+                ?.replace(/^0/, "") // hapus 0 di depan
+                ?.replace(/\D/g, "") // hapus karakter non-angka
+                ? `62${text
+                    .replace(/^\+?62/, "")
+                    .replace(/^0/, "")
+                    .replace(/\D/g, "")}`
+                : ""
+            }`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {text}
+          </Link>
+        ) : (
+          "-"
+        ),
     },
     {
       title: "No. Telp Alt",
       dataIndex: "phoneNumberAlt",
       ...getColumnSearchProps("phoneNumberAlt"),
-      render: (text) => text || "-",
+      render: (text) =>
+        text ? (
+          <Link
+            href={`https://wa.me/${
+              text
+                ?.replace(/^\+?62/, "") // hapus +62 atau 62 di depan jika ada
+                ?.replace(/^0/, "") // hapus 0 di depan
+                ?.replace(/\D/g, "") // hapus karakter non-angka
+                ? `62${text
+                    .replace(/^\+?62/, "")
+                    .replace(/^0/, "")
+                    .replace(/\D/g, "")}`
+                : ""
+            }`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            {text}
+          </Link>
+        ) : (
+          "-"
+        ),
     },
     {
       title: "Status Aktif",
@@ -449,6 +495,28 @@ export default function PartnerTable({
         <p>Item yang sudah dihapus tidak dapat dipulihkan.</p>
       </Modal>
 
+      <div className="flex justify-between items-center gap-4 mb-8">
+        <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+          Jumlah Data: {count}
+        </h3>
+
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={handleExportExcel}>
+            Export Excel
+          </Button>
+
+          <Link href={"/partner/create"}>
+            <Button
+              onClick={() => setLoading(true)}
+              disabled={loading}
+              size="sm"
+            >
+              +
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       <Table
         columns={columns}
         dataSource={data}
@@ -457,7 +525,8 @@ export default function PartnerTable({
         pagination={{ pageSize: 50, showSizeChanger: false }}
         scroll={{ x: "max-content", y: 500 }}
         onChange={(pagination, filters, sorter, extra) => {
-          onCountChange?.(extra.currentDataSource.length);
+          setCurrentData(extra.currentDataSource as Partner[]);
+          setCount(extra.currentDataSource.length);
         }}
       />
     </div>

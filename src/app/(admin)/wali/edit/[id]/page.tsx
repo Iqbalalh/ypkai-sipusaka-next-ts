@@ -27,6 +27,7 @@ import { Employee } from "@/types/employee";
 import { Wali } from "@/types/wali"; // <= pastikan ini ada
 import { useParams, useRouter } from "next/navigation";
 import { extractKeyFromUrl } from "@/lib/extractKey";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 const { TextArea } = Input;
 
@@ -240,15 +241,13 @@ export default function UpdateWali() {
                   }
                 />
               </div>
-              
+
               <div>
                 <Label>NIK</Label>
                 <Input
                   size="large"
                   value={form.nik ?? ""}
-                  onChange={(e) =>
-                    setForm({ ...form, nik: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, nik: e.target.value })}
                 />
               </div>
 
@@ -288,12 +287,10 @@ export default function UpdateWali() {
 
               <div>
                 <Label>No. Telepon Wali</Label>
-                <Input
+                <InputPhone
                   size="large"
                   value={form.waliPhone ?? ""}
-                  onChange={(e) =>
-                    setForm({ ...form, waliPhone: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, waliPhone: e })}
                 />
               </div>
 

@@ -36,3 +36,6 @@ export const API_DASHBOARD = `${baseUrl}/api/dashboard`
 
 // Staff
 export const API_STAFF = `${baseUrl}/api/staff`;
+
+// Image
+export const API_IMAGE = `${baseUrl}/api/images`;

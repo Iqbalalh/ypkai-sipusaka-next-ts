@@ -28,6 +28,7 @@ import { Employee } from "@/types/employee";
 import { Wali } from "@/types/wali";
 import { Partner } from "@/types/partner";
 import dayjs from "dayjs";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 export default function CreateHome() {
   const [home, setHome] = useState({
@@ -730,23 +731,20 @@ export default function CreateHome() {
 
               <div>
                 <Label>Nomor Telepon *</Label>
-                <Input
-                  className="w-full"
+                <InputPhone
                   size="large"
                   value={form.partner.phoneNumber}
-                  onChange={(e) => updatePartner("phoneNumber", e.target.value)}
+                  onChange={(e) => updatePartner("phoneNumber", e)}
                 />
               </div>
 
               <div>
                 <Label>Nomor Telepon Alternatif</Label>
-                <Input
-                  className="w-full"
+                <InputPhone
                   size="large"
-                  type="number"
                   value={form.partner.phoneNumberAlt}
                   onChange={(e) =>
-                    updatePartner("phoneNumberAlt", e.target.value)
+                    updatePartner("phoneNumberAlt", e)
                   }
                 />
               </div>
@@ -974,10 +972,10 @@ export default function CreateHome() {
 
               <div>
                 <Label>No. Telepon Wali</Label>
-                <Input
+                <InputPhone
                   size="large"
                   value={form.wali.waliPhone ?? ""}
-                  onChange={(e) => updateWali("waliPhone", e.target.value)}
+                  onChange={(e) => updateWali("waliPhone", e)}
                 />
               </div>
 
@@ -1072,11 +1070,11 @@ export default function CreateHome() {
               />
 
               <Label className="mt-3">No. HP Anak</Label>
-              <Input
+              <InputPhone
                 size="large"
                 value={child.childrenPhone ?? ""}
                 onChange={(e) =>
-                  updateChild(index, { childrenPhone: e.target.value })
+                  updateChild(index, { childrenPhone: e })
                 }
               />
 

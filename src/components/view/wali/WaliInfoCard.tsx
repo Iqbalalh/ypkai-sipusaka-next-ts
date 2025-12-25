@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from "react";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { API_WALI } from "@/lib/apiEndpoint";
+import { API_IMAGE, API_WALI } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Button from "@/components/ui/button/Button";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import { Wali } from "@/types/wali";
 import Link from "next/link";
 import { fetchDataInfo } from "@/lib/fetchDataInfo";
+import { handlePrintWali } from "@/lib/pdf-modules/wali.pdf";
+import { extractKeyFromPresignedUrl } from "@/lib/extractKeyFromPresignedUrl";
 
 export default function WaliInfoCard() {
   const [data, setData] = useState<Wali | null>(null);
@@ -74,6 +76,19 @@ export default function WaliInfoCard() {
               </div>
 
               <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    handlePrintWali(
+                      data,
+                      `${API_IMAGE}/?keyObject=${extractKeyFromPresignedUrl(
+                        data?.waliPict
+                      )}`
+                    )
+                  }
+                >
+                  Print
+                </Button>
                 <Link href={`/wali/edit/${data?.id}`}>
                   <Button variant="outline">Edit</Button>
                 </Link>

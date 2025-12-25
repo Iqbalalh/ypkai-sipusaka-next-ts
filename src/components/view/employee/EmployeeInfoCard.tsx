@@ -4,13 +4,15 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/ui/button/Button";
 import { Image, message, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import { API_EMPLOYEES } from "@/lib/apiEndpoint";
+import { API_EMPLOYEES, API_IMAGE } from "@/lib/apiEndpoint";
 import { useParams } from "next/navigation";
 import Badge from "@/components/ui/badge/Badge";
 import { InfoItem } from "../../helper/InfoItemHelper";
 import Link from "next/link";
 import { Employee } from "@/types/employee";
 import { fetchDataInfo } from "@/lib/fetchDataInfo";
+import { handlePrintEmployee } from "@/lib/pdf-modules/employee.pdf";
+import { extractKeyFromPresignedUrl } from "@/lib/extractKeyFromPresignedUrl";
 
 export default function EmployeeInfoCard() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -78,6 +80,12 @@ export default function EmployeeInfoCard() {
             </div>
 
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => handlePrintEmployee(data, `${API_IMAGE}/?keyObject=${extractKeyFromPresignedUrl(data?.employeePict)}`)}
+              >
+                Print
+              </Button>
               <Link href={`/employee/edit/${data?.id}`}>
                 <Button variant="outline">Edit</Button>
               </Link>

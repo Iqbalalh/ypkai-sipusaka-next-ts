@@ -33,6 +33,7 @@ import { Option } from "@/components/form/Select";
 import { useParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { extractKeyFromUrl } from "@/lib/extractKey";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 const { TextArea } = Input;
 
@@ -317,13 +318,10 @@ export default function UpdateChildren() {
 
               <div>
                 <Label>No Telepon</Label>
-                <Input
+                <InputPhone
                   size="large"
-                  type="number"
                   value={form.childrenPhone ?? ""}
-                  onChange={(e) =>
-                    setForm({ ...form, childrenPhone: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, childrenPhone: e })}
                 />
               </div>
 

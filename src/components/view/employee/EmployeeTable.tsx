@@ -232,13 +232,13 @@ export default function EmployeeTable() {
   // TABLE COLUMNS
   // ==========================
   const columns: ColumnsType<Employee> = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      render: (text) => text || "-",
-      exportRender: (value: number) => value ?? "-",
-    },
+    // {
+    //   title: "ID",
+    //   dataIndex: "id",
+    //   key: "id",
+    //   render: (text) => text || "-",
+    //   exportRender: (value: number) => value ?? "-",
+    // },
 
     {
       title: "Foto",
@@ -364,6 +364,7 @@ export default function EmployeeTable() {
         text ? new Date(text).toLocaleDateString("id-ID") : "-",
       exportRender: (value: string) =>
         value ? new Date(value).toLocaleDateString("id-ID") : "-",
+      hidden: true,
     },
 
     {
@@ -374,6 +375,7 @@ export default function EmployeeTable() {
         text ? new Date(text).toLocaleDateString("id-ID") : "-",
       exportRender: (value: string) =>
         value ? new Date(value).toLocaleDateString("id-ID") : "-",
+      hidden: true,
     },
     {
       title: "Aksi",

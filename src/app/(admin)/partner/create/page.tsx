@@ -24,6 +24,7 @@ import { Region } from "@/types/region";
 import { Subdistricts } from "@/types/subdistrict";
 import { Partner } from "@/types/partner";
 import { useRouter } from "next/navigation";
+import InputPhone from "@/components/form/form-elements/InputPhone";
 
 const { TextArea } = Input;
 
@@ -307,26 +308,19 @@ export default function CreatePartner() {
 
               <div>
                 <Label>Nomor Telepon *</Label>
-                <Input
-                  className="w-full"
+                <InputPhone
                   size="large"
                   value={form.phoneNumber}
-                  onChange={(e) =>
-                    setForm({ ...form, phoneNumber: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, phoneNumber: e })}
                 />
               </div>
 
               <div>
                 <Label>Nomor Telepon Alternatif</Label>
-                <Input
-                  className="w-full"
+                <InputPhone
                   size="large"
-                  type="number"
                   value={form.phoneNumberAlt}
-                  onChange={(e) =>
-                    setForm({ ...form, phoneNumberAlt: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, phoneNumberAlt: e })}
                 />
               </div>
             </div>
